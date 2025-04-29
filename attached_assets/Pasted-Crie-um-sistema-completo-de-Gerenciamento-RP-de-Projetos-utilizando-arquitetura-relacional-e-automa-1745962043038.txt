@@ -1,0 +1,185 @@
+Crie um sistema completo de Gerenciamento RP de Projetos, utilizando arquitetura relacional e automações inteligentes, com as seguintes especificações:
+
+🧱 1. Estrutura de Dados (Relacional):
+
+Crie três entidades principais com relacionamento entre si:
+
+Projeto
+
+Subprojeto
+
+Atividade
+
+Relacionamento:
+
+Um Projeto pode ter vários Subprojetos.
+
+Um Subprojeto pode ter várias Atividades.
+
+Inclua campos em cada entidade conforme abaixo:
+
+🔸 Projeto:
+
+Nome do Projeto (texto obrigatório)
+
+Descrição (texto longo)
+
+Status (lista suspensa: Em andamento, Aguardando, Finalizado)
+
+Data do status (data vinculada à última mudança de status)
+
+Município (texto)
+
+Contatos (lista de contatos vinculados)
+
+Checklist por município (lista de verificação customizável)
+
+Data de início (data)
+
+Data de término (data)
+
+Responsável (usuário)
+
+SLA - Prazo de resposta (número de dias)
+
+Alerta de atraso (booleano automático baseado no SLA)
+
+Atualizações diárias (registro de log com data e observação)
+
+Agenda de eventos (entidade vinculada ou campo de múltiplas datas com títulos)
+
+Anexos (upload de arquivos ou links)
+
+Subprojetos vinculados (relacionamento 1:N)
+
+🔸 Subprojeto:
+
+Nome do Subprojeto
+
+Relacionado ao Projeto (chave estrangeira)
+
+Descrição
+
+Status (mesma lógica do projeto)
+
+Responsável
+
+Data de início e fim
+
+Atividades vinculadas
+
+🔸 Atividade:
+
+Nome da Atividade
+
+Subprojeto relacionado (chave estrangeira)
+
+Descrição
+
+Status
+
+Responsável
+
+Data de início
+
+Data de vencimento
+
+SLA de execução
+
+Alerta de atraso automático
+
+Observações atualizáveis com data e autor
+
+Checklist da tarefa
+
+Anexos
+
+⚙️ 2. Funcionalidades Essenciais:
+
+Direcionamento de tarefas: Permitir atribuição de responsáveis a atividades e subprojetos com notificações automáticas.
+
+Acompanhamento de Projetos: Campo de checklist por município e contatos vinculados. Atualização diária de status (campo de observações por dia, com data e usuário logado).
+
+Agenda integrada: Eventos por projeto/subprojeto com visualização em calendário.
+
+Alerta de resposta: Verificar SLA diariamente e disparar alerta para atividades e projetos não atualizados ou atrasados.
+
+Trilha de auditoria: Registro automático de:
+
+Mudança de status
+
+Alteração de datas
+
+Alteração de responsáveis
+
+Inclusão de atualizações diárias
+
+Notificações: E-mail e notificações internas automáticas para:
+
+Atribuição de tarefas
+
+Vencimento próximo (baseado em SLA)
+
+Falta de atualização diária
+
+📊 3. Painéis e Visualizações:
+
+Dashboard principal: Cards com totais: Projetos ativos, atrasados, concluídos Filtros por município, status, usuário responsável
+
+Visualizações:
+
+Kanban por status
+
+Gantt por datas
+
+Calendário de eventos
+
+Lista com filtros e busca avançada
+
+🔐 4. Controle de Acesso:
+
+Permissões por perfil de usuário:
+
+Administrador: acesso total
+
+Gerente de Projeto: pode editar projetos que coordena
+
+Usuário: acesso apenas às tarefas atribuídas
+
+🧠 5. Automação:
+
+Executar automações diariamente às 8h:
+
+Verificar se houve atualização no campo de "Atualização diária"
+
+Se não houver atualização, marcar como “não atualizado” e alertar o responsável
+
+Verificar vencimentos e SLAs, emitir alertas automáticos com base nos prazos
+
+Sempre que um status for alterado:
+
+Registrar data da alteração
+
+Criar log de auditoria
+
+Sempre que uma tarefa for atribuída:
+
+Notificar o usuário responsável
+
+📱 6. Design e Usabilidade:
+
+Interface responsiva para desktop e mobile
+
+Visual limpo, com ícones intuitivos e separação clara entre Projetos, Subprojetos e Atividades
+
+Utilizar cores para status (Ex: verde = concluído, amarelo = em andamento, vermelho = atrasado)
+
+Cada projeto deve ter uma página de visão geral com resumo, trilha de atividades e agenda
+
+📦 7. Exportação e Backup:
+
+Permitir exportar dados em CSV ou Excel
+
+Backup automático diário da base
+
+🎯 Objetivo Final: O sistema deve permitir o gerenciamento completo de múltiplos projetos com atualização diária, controle de prazos, atribuições, e alertas automatizados, ideal para equipes multidisciplinares que acompanham projetos públicos e privados em diferentes municípios.
