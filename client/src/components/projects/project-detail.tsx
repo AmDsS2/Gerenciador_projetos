@@ -23,6 +23,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Separator } from "@/components/ui/separator";
 import { Edit, Trash2, Upload, Calendar, CheckSquare, ClipboardList, Plus, FileText } from "lucide-react";
 import { ProjectForm } from "./project-form";
+import { AttachmentForm } from "@/components/attachments/attachment-form";
 import { STATUS_COLORS } from "@/lib/constants";
 
 interface ProjectDetailProps {
@@ -545,6 +546,21 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
             projectId={projectId}
             onSuccess={() => setShowAddContact(false)}
             onCancel={() => setShowAddContact(false)}
+          />
+        </DialogContent>
+      </Dialog>
+      
+      {/* Add Attachment Dialog */}
+      <Dialog open={showAddAttachment} onOpenChange={setShowAddAttachment}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar Anexo</DialogTitle>
+          </DialogHeader>
+          <AttachmentForm
+            entityType="project"
+            entityId={projectId}
+            onSuccess={() => setShowAddAttachment(false)}
+            onCancel={() => setShowAddAttachment(false)}
           />
         </DialogContent>
       </Dialog>

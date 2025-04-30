@@ -9,6 +9,7 @@ import { formatDate } from "@/lib/utils";
 import { MONTHS, WEEKDAYS_SHORT } from "@/lib/constants";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths, subMonths, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { EventForm } from "@/components/events/event-form";
 
 interface CalendarViewProps {
   projectId?: number;  // Optional to allow viewing all events
@@ -250,7 +251,19 @@ export function CalendarView({ projectId }: CalendarViewProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Add Event Dialog would go here */}
+      {/* Add Event Dialog */}
+      <Dialog open={showAddEvent} onOpenChange={setShowAddEvent}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Novo Evento</DialogTitle>
+          </DialogHeader>
+          <EventForm
+            projectId={projectId}
+            onSuccess={() => setShowAddEvent(false)}
+            onCancel={() => setShowAddEvent(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
