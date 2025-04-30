@@ -17,6 +17,7 @@ import { SubprojectForm } from "@/components/subprojects/subproject-form";
 import { KanbanView } from "@/components/kanban/kanban-view";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import { GanttView } from "@/components/gantt/gantt-view";
+import { ContactForm } from "@/components/contacts/contact-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
@@ -34,6 +35,8 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
   const [showEditProject, setShowEditProject] = useState(false);
   const [showCreateSubproject, setShowCreateSubproject] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [showAddAttachment, setShowAddAttachment] = useState(false);
   const [newUpdate, setNewUpdate] = useState("");
 
   // Fetch project data
@@ -303,7 +306,12 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
                         <p className="text-sm text-muted-foreground">Nenhum anexo disponível</p>
                       )}
                       
-                      <Button variant="outline" size="sm" className="mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-2"
+                        onClick={() => setShowAddAttachment(true)}
+                      >
                         <Upload className="h-4 w-4 mr-2" />
                         Adicionar Anexo
                       </Button>
@@ -526,6 +534,20 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* Add Contact Dialog */}
+      <Dialog open={showAddContact} onOpenChange={setShowAddContact}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar Contato</DialogTitle>
+          </DialogHeader>
+          <ContactForm
+            projectId={projectId}
+            onSuccess={() => setShowAddContact(false)}
+            onCancel={() => setShowAddContact(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

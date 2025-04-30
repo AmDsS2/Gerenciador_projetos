@@ -14,6 +14,7 @@ const contactFormSchema = insertContactSchema.extend({
   // Additional client-side validations if needed
   email: z.string().email("Email inválido").optional().nullable(),
   phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos").optional().nullable(),
+  notes: z.string().optional().nullable(),
 });
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;

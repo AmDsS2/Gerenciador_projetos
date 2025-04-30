@@ -50,6 +50,7 @@ export const contacts = pgTable("contacts", {
   email: text("email"),
   phone: text("phone"),
   role: text("role"),
+  notes: text("notes"),
   projectId: integer("project_id").references(() => projects.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
