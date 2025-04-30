@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SubprojectList } from "@/components/subprojects/subproject-list";
 import { SubprojectForm } from "@/components/subprojects/subproject-form";
 import { Filter, Plus } from "lucide-react";
@@ -83,6 +83,9 @@ export default function Subprojects() {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Novo Subprojeto</DialogTitle>
+            <DialogDescription>
+              Preencha as informações abaixo para criar um novo subprojeto.
+            </DialogDescription>
           </DialogHeader>
           <SubprojectForm 
             projectId={selectedProject || (projects?.[0]?.id || 0)}

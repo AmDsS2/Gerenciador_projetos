@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Subproject, Project } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ActivityList } from "@/components/activities/activity-list";
 import { ActivityForm } from "@/components/activities/activity-form";
@@ -106,6 +106,9 @@ export default function Activities() {
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>Nova Atividade</DialogTitle>
+              <DialogDescription>
+                Preencha as informações abaixo para criar uma nova atividade no subprojeto.
+              </DialogDescription>
             </DialogHeader>
             <ActivityForm 
               subprojectId={selectedSubproject || (subprojects?.[0]?.id || 0)}
