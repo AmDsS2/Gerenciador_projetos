@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ProjectList } from "@/components/projects/project-list";
 import { ProjectForm } from "@/components/projects/project-form";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Projects() {
   const [showCreateProject, setShowCreateProject] = useState(false);
@@ -18,6 +18,9 @@ export default function Projects() {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Novo Projeto</DialogTitle>
+            <DialogDescription>
+              Preencha as informações abaixo para criar um novo projeto.
+            </DialogDescription>
           </DialogHeader>
           <ProjectForm 
             onSuccess={() => setShowCreateProject(false)} 

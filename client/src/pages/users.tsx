@@ -259,6 +259,9 @@ export default function Users() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Criar Novo Usuário</DialogTitle>
+            <DialogDescription>
+              Preencha as informações abaixo para criar um novo usuário no sistema.
+            </DialogDescription>
           </DialogHeader>
           <Form {...createForm}>
             <form onSubmit={createForm.handleSubmit(handleCreateUser)} className="space-y-4">
@@ -375,6 +378,9 @@ export default function Users() {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Editar Usuário</DialogTitle>
+              <DialogDescription>
+                Atualize as informações do usuário conforme necessário.
+              </DialogDescription>
             </DialogHeader>
             <Form {...editForm}>
               <form onSubmit={editForm.handleSubmit(handleEditUser)} className="space-y-4">
