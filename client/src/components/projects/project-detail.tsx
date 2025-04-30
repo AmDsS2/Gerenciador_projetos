@@ -398,7 +398,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle>Contatos</CardTitle>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => setShowAddContact(true)}>
                       <Plus className="h-4 w-4 mr-2" />
                       Adicionar
                     </Button>

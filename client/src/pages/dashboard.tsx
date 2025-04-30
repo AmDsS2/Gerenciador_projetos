@@ -106,10 +106,85 @@ export default function Dashboard() {
         <h1 className="text-2xl font-semibold">Dashboard</h1>
         
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => {
+            const dialog = document.getElementById('filter-dialog');
+            if (dialog) {
+              (dialog as any).showModal();
+            }
+          }}>
             <Filter className="h-4 w-4 mr-2" />
             Filtros
           </Button>
+          
+          <dialog id="filter-dialog" className="p-6 rounded-lg shadow-lg border border-gray-200 bg-white w-full max-w-md">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Filtros</h2>
+                <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => {
+                  const dialog = document.getElementById('filter-dialog');
+                  if (dialog) {
+                    (dialog as any).close();
+                  }
+                }}>
+                  <span className="sr-only">Fechar</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </Button>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Status</label>
+                <select className="w-full p-2 border border-gray-300 rounded-md">
+                  <option value="">Todos</option>
+                  <option value="Em andamento">Em andamento</option>
+                  <option value="Aguardando">Aguardando</option>
+                  <option value="Finalizado">Finalizado</option>
+                  <option value="Atrasado">Atrasado</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Responsável</label>
+                <select className="w-full p-2 border border-gray-300 rounded-md">
+                  <option value="">Todos</option>
+                  {users && users.map(user => (
+                    <option key={user.id} value={user.id}>{user.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Município</label>
+                <input type="text" className="w-full p-2 border border-gray-300 rounded-md" placeholder="Digite o município" />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Período</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <input type="date" className="p-2 border border-gray-300 rounded-md" />
+                  <input type="date" className="p-2 border border-gray-300 rounded-md" />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => {
+                  const dialog = document.getElementById('filter-dialog');
+                  if (dialog) {
+                    (dialog as any).close();
+                  }
+                }}>Cancelar</Button>
+                <Button onClick={() => {
+                  // Lógica para aplicar filtros
+                  const dialog = document.getElementById('filter-dialog');
+                  if (dialog) {
+                    (dialog as any).close();
+                  }
+                }}>Aplicar</Button>
+              </div>
+            </div>
+          </dialog>
           
           <Link href="/projects">
             <Button>
