@@ -227,11 +227,12 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
 
         {/* Project Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-4 md:w-[400px]">
+          <TabsList className="grid grid-cols-5 md:w-[500px]">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="subprojects">Subprojetos</TabsTrigger>
             <TabsTrigger value="kanban">Kanban</TabsTrigger>
             <TabsTrigger value="calendar">Calendário</TabsTrigger>
+            <TabsTrigger value="gantt">Gantt</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -455,6 +456,11 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
           <TabsContent value="calendar">
             <CalendarView projectId={projectId} />
           </TabsContent>
+
+          {/* Gantt Tab */}
+          <TabsContent value="gantt">
+            <GanttView projectId={projectId} />
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -465,7 +471,18 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
             <DialogTitle>Editar Projeto</DialogTitle>
           </DialogHeader>
           <ProjectForm 
-            initialValues={project} 
+            // Convertemos e adaptamos o formato do projeto para o formulário
+            initialValues={{
+              name: project.name,
+              description: project.description,
+              status: project.status,
+              municipality: project.municipality,
+              startDate: project.startDate ? new Date(project.startDate) : undefined,
+              endDate: project.endDate ? new Date(project.endDate) : undefined,
+              responsibleId: project.responsibleId,
+              sla: project.sla ? project.sla : undefined,
+              checklist: project.checklist
+            }}
             onSuccess={() => setShowEditProject(false)} 
             onCancel={() => setShowEditProject(false)} 
           />

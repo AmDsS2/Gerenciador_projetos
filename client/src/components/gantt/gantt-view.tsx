@@ -1,3 +1,12 @@
+/**
+ * Componente de visualização Gantt para projetos e atividades
+ * 
+ * Este componente oferece uma visualização de cronograma no formato Gantt,
+ * permitindo visualizar o progresso de atividades e subprojetos ao longo do tempo.
+ * As barras são coloridas de acordo com o status do item e são posicionadas
+ * proporcionalmente no intervalo de tempo do projeto.
+ */
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Subproject } from "@shared/schema";
@@ -165,7 +174,7 @@ export function GanttView({ projectId, subprojectId }: GanttViewProps) {
                     style={{
                       left: `${calculateBarPosition(activity.startDate, activity.dueDate).left}%`,
                       width: `${calculateBarPosition(activity.startDate, activity.dueDate).width}%`,
-                      backgroundColor: STATUS_COLORS[activity.status] || '#3b82f6',
+                      backgroundColor: STATUS_COLORS[activity.status as keyof typeof STATUS_COLORS]?.bg || '#3b82f6',
                     }}
                   >
                     <div className="h-full w-full flex items-center justify-center text-xs text-white overflow-hidden">
@@ -184,13 +193,13 @@ export function GanttView({ projectId, subprojectId }: GanttViewProps) {
                 {subproject.name}
               </div>
               <div className="w-3/4 relative h-10">
-                {subproject.startDate && subproject.dueDate && (
+                {subproject.startDate && subproject.endDate && (
                   <div 
                     className="absolute top-2 bottom-2 rounded-md"
                     style={{
-                      left: `${calculateBarPosition(subproject.startDate, subproject.dueDate).left}%`,
-                      width: `${calculateBarPosition(subproject.startDate, subproject.dueDate).width}%`,
-                      backgroundColor: STATUS_COLORS[subproject.status] || '#4b5563',
+                      left: `${calculateBarPosition(subproject.startDate, subproject.endDate).left}%`,
+                      width: `${calculateBarPosition(subproject.startDate, subproject.endDate).width}%`,
+                      backgroundColor: STATUS_COLORS[subproject.status as keyof typeof STATUS_COLORS]?.bg || '#4b5563',
                     }}
                   >
                     <div className="h-full w-full flex items-center justify-center text-xs text-white overflow-hidden">
