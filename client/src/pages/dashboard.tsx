@@ -155,6 +155,9 @@ export default function Dashboard() {
       {/* Project List */}
       <Card>
         <CardHeader className="border-b border-gray-200">
+          <h2 className="font-medium text-lg">Projetos</h2>
+        </CardHeader>
+        <CardContent className="pt-4">
           <Tabs defaultValue="lista" value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
               <TabsTrigger value="lista">Lista</TabsTrigger>
@@ -162,161 +165,153 @@ export default function Dashboard() {
               <TabsTrigger value="calendario">Calendário</TabsTrigger>
               <TabsTrigger value="gantt">Gantt</TabsTrigger>
             </TabsList>
-          </Tabs>
-        </CardHeader>
-        
-        <TabsContent value="lista" className="mt-0">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome do Projeto</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Responsável</TableHead>
-                    <TableHead>Município</TableHead>
-                    <TableHead>Data de Início</TableHead>
-                    <TableHead>Data de Término</TableHead>
-                    <TableHead>SLA</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {projects && projects.length > 0 ? (
-                    projects.slice(0, 5).map((project) => (
-                      <TableRow key={project.id} className="hover:bg-gray-50">
-                        <TableCell>
-                          <div className="flex items-center">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{project.name}</div>
-                              <div className="text-sm text-gray-500">
-                                {project.description?.substring(0, 40)}
-                                {project.description && project.description.length > 40 ? "..." : ""}
+            
+            <TabsContent value="lista" className="mt-4">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome do Projeto</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Responsável</TableHead>
+                      <TableHead>Município</TableHead>
+                      <TableHead>Data de Início</TableHead>
+                      <TableHead>Data de Término</TableHead>
+                      <TableHead>SLA</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {projects && projects.length > 0 ? (
+                      projects.slice(0, 5).map((project) => (
+                        <TableRow key={project.id} className="hover:bg-gray-50">
+                          <TableCell>
+                            <div className="flex items-center">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{project.name}</div>
+                                <div className="text-sm text-gray-500">
+                                  {project.description?.substring(0, 40)}
+                                  {project.description && project.description.length > 40 ? "..." : ""}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={`${
-                              STATUS_COLORS[project.status as keyof typeof STATUS_COLORS]?.bg
-                            } ${
-                              STATUS_COLORS[project.status as keyof typeof STATUS_COLORS]?.text
-                            }`}
-                          >
-                            {project.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <Avatar className="h-8 w-8 mr-2 bg-primary">
-                              <AvatarFallback>
-                                {getInitials(getUserName(project.responsibleId))}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="text-sm font-medium text-gray-900">
-                              {getUserName(project.responsibleId)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={`${
+                                STATUS_COLORS[project.status as keyof typeof STATUS_COLORS]?.bg
+                              } ${
+                                STATUS_COLORS[project.status as keyof typeof STATUS_COLORS]?.text
+                              }`}
+                            >
+                              {project.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <Avatar className="h-8 w-8 mr-2 bg-primary">
+                                <AvatarFallback>
+                                  {getInitials(getUserName(project.responsibleId))}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="text-sm font-medium text-gray-900">
+                                {getUserName(project.responsibleId)}
+                              </div>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{project.municipality || "-"}</TableCell>
-                        <TableCell>{formatDate(project.startDate)}</TableCell>
-                        <TableCell>{formatDate(project.endDate)}</TableCell>
-                        <TableCell>
-                          {project.isDelayed ? (
-                            <span className="flex items-center text-destructive">
-                              <AlertTriangle className="h-4 w-4 mr-1" />
-                              Atrasado
-                            </span>
-                          ) : (
-                            <span className="flex items-center text-success">
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Em dia
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Link href={`/projects/${project.id}`}>
-                            <Button variant="link" className="text-primary">
-                              Detalhes
-                            </Button>
-                          </Link>
+                          </TableCell>
+                          <TableCell>{project.municipality || "-"}</TableCell>
+                          <TableCell>{formatDate(project.startDate)}</TableCell>
+                          <TableCell>{formatDate(project.endDate)}</TableCell>
+                          <TableCell>
+                            {project.isDelayed ? (
+                              <span className="flex items-center text-destructive">
+                                <AlertTriangle className="h-4 w-4 mr-1" />
+                                Atrasado
+                              </span>
+                            ) : (
+                              <span className="flex items-center text-success">
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Em dia
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Link href={`/projects/${project.id}`}>
+                              <Button variant="link" className="text-primary">
+                                Detalhes
+                              </Button>
+                            </Link>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-6">
+                          Nenhum projeto encontrado
                         </TableCell>
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-6">
-                        Nenhum projeto encontrado
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-            
-            <div className="flex items-center justify-between p-4 border-t border-gray-200">
-              <div className="text-sm text-gray-500">
-                Mostrando <span className="font-medium">1</span> a{" "}
-                <span className="font-medium">{projects?.length || 0}</span> de{" "}
-                <span className="font-medium">{projects?.length || 0}</span> resultados
+                    )}
+                  </TableBody>
+                </Table>
               </div>
               
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled>
-                  Anterior
-                </Button>
-                <Button variant="outline" size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                  1
-                </Button>
-                <Button variant="outline" size="sm" disabled>
-                  Próximo
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </TabsContent>
-        
-        <TabsContent value="kanban" className="mt-0">
-          <CardContent className="p-4">
-            <div className="h-64 flex items-center justify-center border border-dashed border-gray-300 rounded-lg">
-              <div className="text-center">
-                <p className="text-muted-foreground">Visualização Kanban disponível na página de projetos</p>
-                <Link href="/projects">
-                  <Button variant="outline" className="mt-2">
-                    Ver Projetos
+              <div className="flex items-center justify-between p-4 border-t border-gray-200 mt-4">
+                <div className="text-sm text-gray-500">
+                  Mostrando <span className="font-medium">1</span> a{" "}
+                  <span className="font-medium">{projects?.length || 0}</span> de{" "}
+                  <span className="font-medium">{projects?.length || 0}</span> resultados
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled>
+                    Anterior
                   </Button>
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </TabsContent>
-        
-        <TabsContent value="calendario" className="mt-0">
-          <CardContent className="p-4">
-            <div className="h-64 flex items-center justify-center border border-dashed border-gray-300 rounded-lg">
-              <div className="text-center">
-                <p className="text-muted-foreground">Visualização de Calendário disponível na página de calendário</p>
-                <Link href="/calendar">
-                  <Button variant="outline" className="mt-2">
-                    Ver Calendário
+                  <Button variant="outline" size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                    1
                   </Button>
-                </Link>
+                  <Button variant="outline" size="sm" disabled>
+                    Próximo
+                  </Button>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </TabsContent>
-        
-        <TabsContent value="gantt" className="mt-0">
-          <CardContent className="p-4">
-            <div className="h-64 flex items-center justify-center border border-dashed border-gray-300 rounded-lg">
-              <div className="text-center">
-                <p className="text-muted-foreground">Visualização Gantt em breve</p>
+            </TabsContent>
+            
+            <TabsContent value="kanban" className="mt-4">
+              <div className="h-64 flex items-center justify-center border border-dashed border-gray-300 rounded-lg">
+                <div className="text-center">
+                  <p className="text-muted-foreground">Visualização Kanban disponível na página de projetos</p>
+                  <Link href="/projects">
+                    <Button variant="outline" className="mt-2">
+                      Ver Projetos
+                    </Button>
+                  </Link>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </TabsContent>
+            </TabsContent>
+            
+            <TabsContent value="calendario" className="mt-4">
+              <div className="h-64 flex items-center justify-center border border-dashed border-gray-300 rounded-lg">
+                <div className="text-center">
+                  <p className="text-muted-foreground">Visualização de Calendário disponível na página de calendário</p>
+                  <Link href="/calendar">
+                    <Button variant="outline" className="mt-2">
+                      Ver Calendário
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="gantt" className="mt-4">
+              <div className="h-64 flex items-center justify-center border border-dashed border-gray-300 rounded-lg">
+                <div className="text-center">
+                  <p className="text-muted-foreground">Visualização Gantt em breve</p>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
       </Card>
       
       {/* Activities and Calendar Section */}
