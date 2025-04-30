@@ -16,6 +16,7 @@ import { SubprojectList } from "@/components/subprojects/subproject-list";
 import { SubprojectForm } from "@/components/subprojects/subproject-form";
 import { KanbanView } from "@/components/kanban/kanban-view";
 import { CalendarView } from "@/components/calendar/calendar-view";
+import { GanttView } from "@/components/gantt/gantt-view";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
