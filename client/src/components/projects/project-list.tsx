@@ -96,7 +96,7 @@ export function ProjectList({ onCreateProject }: ProjectListProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="">Todos os status</SelectItem>
+                  <SelectItem value="all">Todos os status</SelectItem>
                   <SelectItem value="Em andamento">Em andamento</SelectItem>
                   <SelectItem value="Aguardando">Aguardando</SelectItem>
                   <SelectItem value="Finalizado">Finalizado</SelectItem>

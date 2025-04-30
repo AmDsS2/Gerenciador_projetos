@@ -38,7 +38,7 @@ export default function Subprojects() {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os projetos</SelectItem>
+              <SelectItem value="all">Todos os projetos</SelectItem>
               {projects?.map((project) => (
                 <SelectItem key={project.id} value={project.id.toString()}>
                   {project.name}

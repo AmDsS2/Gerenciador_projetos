@@ -27,7 +27,7 @@ export default function Calendar() {
               <SelectValue placeholder="Filtrar por projeto" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os eventos</SelectItem>
+              <SelectItem value="all">Todos os eventos</SelectItem>
               {projects?.map((project) => (
                 <SelectItem key={project.id} value={project.id.toString()}>
                   {project.name}

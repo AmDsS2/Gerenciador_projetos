@@ -30,9 +30,24 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("lista");
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
+  // Define type for dashboard stats
+  interface DashboardStats {
+    totalProjects: number;
+    activeProjects: number;
+    delayedProjects: number;
+    completedProjects: number;
+  }
+
   // Fetch dashboard stats
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
+    // Provide default empty data to prevent type errors
+    placeholderData: {
+      totalProjects: 0,
+      activeProjects: 0,
+      delayedProjects: 0,
+      completedProjects: 0
+    }
   });
 
   // Fetch projects
