@@ -22,20 +22,14 @@ export default defineConfig({
         "drizzle-zod",
         "pg",
         "postgres",
-        "zod"
+        "zod",
+        "react-router-dom"
       ],
       output: {
-        manualChunks: (id) => {
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-router-dom')) {
-              return 'vendor';
-            }
-            if (id.includes('@radix-ui')) {
-              return 'ui';
-            }
-          }
+        globals: {
+          "react-router-dom": "ReactRouterDOM"
         }
-      },
+      }
     },
   },
   server: {
