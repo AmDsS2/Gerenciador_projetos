@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ActivityList } from "@/components/activities/activity-list";
 import { ActivityForm } from "@/components/activities/activity-form";
 import { Filter, Plus } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 
 export default function Activities() {

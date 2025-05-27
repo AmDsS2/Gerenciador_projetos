@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Project, Subproject, ProjectUpdate, Contact, User, Attachment } from "@shared/types";
 import { formatDate, formatDateTime, getInitials } from "@/lib/utils";
