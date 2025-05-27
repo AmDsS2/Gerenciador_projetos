@@ -10,8 +10,9 @@
       "use": "@vercel/static-build",
       "config": {
         "distDir": "dist/client",
-        "buildCommand": "cd client && npm install && npm run build",
-        "installCommand": "cd client && npm install"
+        "buildCommand": "cd client && npm install && npm run typecheck && npm run build",
+        "installCommand": "cd client && npm install",
+        "outputDirectory": "dist/client"
       }
     }
   ],
