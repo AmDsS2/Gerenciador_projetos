@@ -2,17 +2,17 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from './schema';
 import {
-  User, InsertUser, users,
-  Project, InsertProject, projects,
-  Contact, InsertContact, contacts,
-  ProjectUpdate, InsertProjectUpdate, projectUpdates,
-  Subproject, InsertSubproject, subprojects,
-  Activity, InsertActivity, activities,
-  ActivityComment, InsertActivityComment, activityComments,
-  Attachment, InsertAttachment, attachments,
-  Event, InsertEvent, events,
-  AuditLog, InsertAuditLog, auditLogs,
-} from "@shared/schema";
+  User, InsertUser,
+  Project, InsertProject,
+  Contact, InsertContact,
+  ProjectUpdate, InsertProjectUpdate,
+  Subproject, InsertSubproject,
+  Activity, InsertActivity,
+  ActivityComment, InsertActivityComment,
+  Attachment, InsertAttachment,
+  Event, InsertEvent,
+  AuditLog, InsertAuditLog,
+} from "@shared/types";
 
 export interface IStorage {
   // User operations
@@ -169,7 +169,7 @@ export class MemStorage implements IStorage {
   // Project operations
   async createProject(project: InsertProject): Promise<Project> {
     const id = this.currentProjectId++;
-    const now = new Date();
+    const now = new Date().toISOString();
     const newProject: Project = {
       ...project,
       id,
@@ -190,21 +190,19 @@ export class MemStorage implements IStorage {
     const existingProject = this.projects.get(id);
     if (!existingProject) return undefined;
     
-    // Preserve the original id and timestamps
+    const now = new Date().toISOString();
     const updatedProject: Project = {
       ...existingProject,
       ...project,
-      id: existingProject.id, // Garante que o ID original seja mantido
-      createdAt: existingProject.createdAt, // Mantém a data de criação original
-      updatedAt: new Date(), // Atualiza apenas a data de atualização
+      id: existingProject.id,
+      createdAt: existingProject.createdAt,
+      updatedAt: now,
     };
     
-    // If status is changed, update the statusUpdatedAt
     if (project.status && project.status !== existingProject.status) {
-      updatedProject.statusUpdatedAt = new Date();
+      updatedProject.statusUpdatedAt = now;
     }
     
-    // Atualiza o projeto existente no Map
     this.projects.set(id, updatedProject);
     return updatedProject;
   }
@@ -241,7 +239,7 @@ export class MemStorage implements IStorage {
     const newContact: Contact = {
       ...contact,
       id,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     this.contacts.set(id, newContact);
     return newContact;
@@ -259,16 +257,16 @@ export class MemStorage implements IStorage {
     const newUpdate: ProjectUpdate = {
       ...update,
       id,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     this.projectUpdates.set(id, newUpdate);
     return newUpdate;
   }
   
   async getProjectUpdatesByProject(projectId: number): Promise<ProjectUpdate[]> {
-    return Array.from(this.projectUpdates.values()).filter(
-      (update) => update.projectId === projectId
-    ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return Array.from(this.projectUpdates.values())
+      .filter((update) => update.projectId === projectId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
   
   async getLatestProjectUpdate(projectId: number): Promise<ProjectUpdate | undefined> {
@@ -279,7 +277,7 @@ export class MemStorage implements IStorage {
   // Subproject operations
   async createSubproject(subproject: InsertSubproject): Promise<Subproject> {
     const id = this.currentSubprojectId++;
-    const now = new Date();
+    const now = new Date().toISOString();
     const newSubproject: Subproject = {
       ...subproject,
       id,
@@ -302,12 +300,12 @@ export class MemStorage implements IStorage {
     const updatedSubproject: Subproject = {
       ...existingSubproject,
       ...subproject,
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     };
     
     // If status is changed, update the statusUpdatedAt
     if (subproject.status && subproject.status !== existingSubproject.status) {
-      updatedSubproject.statusUpdatedAt = new Date();
+      updatedSubproject.statusUpdatedAt = new Date().toISOString();
     }
     
     this.subprojects.set(id, updatedSubproject);
@@ -333,7 +331,7 @@ export class MemStorage implements IStorage {
   // Activity operations
   async createActivity(activity: InsertActivity): Promise<Activity> {
     const id = this.currentActivityId++;
-    const now = new Date();
+    const now = new Date().toISOString();
     const newActivity: Activity = {
       ...activity,
       id,
@@ -357,12 +355,12 @@ export class MemStorage implements IStorage {
     const updatedActivity: Activity = {
       ...existingActivity,
       ...activity,
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     };
     
     // If status is changed, update the statusUpdatedAt
     if (activity.status && activity.status !== existingActivity.status) {
-      updatedActivity.statusUpdatedAt = new Date();
+      updatedActivity.statusUpdatedAt = new Date().toISOString();
     }
     
     this.activities.set(id, updatedActivity);
@@ -397,16 +395,16 @@ export class MemStorage implements IStorage {
     const newComment: ActivityComment = {
       ...comment,
       id,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     this.activityComments.set(id, newComment);
     return newComment;
   }
   
   async getActivityCommentsByActivity(activityId: number): Promise<ActivityComment[]> {
-    return Array.from(this.activityComments.values()).filter(
-      (comment) => comment.activityId === activityId
-    ).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    return Array.from(this.activityComments.values())
+      .filter((comment) => comment.activityId === activityId)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }
   
   // Attachment operations
@@ -415,7 +413,7 @@ export class MemStorage implements IStorage {
     const newAttachment: Attachment = {
       ...attachment,
       id,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     this.attachments.set(id, newAttachment);
     return newAttachment;
@@ -433,10 +431,12 @@ export class MemStorage implements IStorage {
   // Event operations
   async createEvent(event: InsertEvent): Promise<Event> {
     const id = this.currentEventId++;
+    const now = new Date().toISOString();
     const newEvent: Event = {
       ...event,
       id,
-      createdAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     };
     this.events.set(id, newEvent);
     return newEvent;
@@ -492,16 +492,16 @@ export class MemStorage implements IStorage {
     const newLog: AuditLog = {
       ...log,
       id,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     this.auditLogs.set(id, newLog);
     return newLog;
   }
   
   async getAuditLogsByEntity(entityType: string, entityId: number): Promise<AuditLog[]> {
-    return Array.from(this.auditLogs.values()).filter(
-      (log) => log.entityType === entityType && log.entityId === entityId
-    ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return Array.from(this.auditLogs.values())
+      .filter((log) => log.entityType === entityType && log.entityId === entityId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
   
   // Dashboard operations

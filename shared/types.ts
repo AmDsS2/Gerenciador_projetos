@@ -7,7 +7,8 @@ export const userSchema = z.object({
   name: z.string(),
   email: z.string(),
   role: z.string(),
-  avatar: z.string().nullable(),
+  avatar: z.string().nullable().optional(),
+  password: z.string(),
 });
 
 export const insertUserSchema = userSchema.omit({

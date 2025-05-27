@@ -9,6 +9,18 @@ import session from "express-session";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import cors from "cors";
+import { 
+  insertUserSchema,
+  insertProjectSchema,
+  insertContactSchema,
+  insertProjectUpdateSchema,
+  insertSubprojectSchema,
+  insertActivitySchema,
+  insertActivityCommentSchema,
+  insertAttachmentSchema,
+  insertEventSchema,
+  insertAuditLogSchema
+} from "@shared/types";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar CORS
