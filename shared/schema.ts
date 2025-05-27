@@ -161,18 +161,40 @@ export const events = pgTable("events", {
   title: text("title").notNull(),
   description: text("description"),
   startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date"),
+  endDate: timestamp("end_date").notNull(),
   location: text("location"),
   projectId: integer("project_id").references(() => projects.id),
   subprojectId: integer("subproject_id").references(() => subprojects.id),
-  createdBy: integer("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertEventSchema = createInsertSchema(events).omit({
-  id: true,
-  createdAt: true,
+const eventSchema = z.object({
+  title: z.string().min(1, "O título é obrigatório"),
+  description: z.string().nullable(),
+  startDate: z.string().transform((str) => {
+    const date = new Date(str);
+    if (isNaN(date.getTime())) {
+      throw new Error("Data de início inválida");
+    }
+    return date;
+  }),
+  endDate: z.string().nullable().transform((str) => {
+    if (!str) return null;
+    const date = new Date(str);
+    if (isNaN(date.getTime())) {
+      throw new Error("Data de término inválida");
+    }
+    return date;
+  }),
+  location: z.string().nullable(),
+  projectId: z.number().nullable(),
+  subprojectId: z.number().nullable(),
+  createdBy: z.number(),
 });
+
+export const insertEventSchema = eventSchema;
 
 // Audit logs
 export const auditLogs = pgTable("audit_logs", {

@@ -5,6 +5,7 @@ interface DashboardCardProps {
   title: string;
   value: number | string;
   icon: React.ReactNode;
+  description?: string;
   trend?: {
     value: number;
     label: string;
@@ -17,6 +18,7 @@ export function DashboardCard({
   title,
   value,
   icon,
+  description,
   trend,
   className,
 }: DashboardCardProps) {
@@ -27,6 +29,9 @@ export function DashboardCard({
           <div>
             <p className="text-sm text-muted-foreground">{title}</p>
             <p className="text-2xl font-semibold mt-1">{value}</p>
+            {description && (
+              <p className="text-sm text-muted-foreground mt-1">{description}</p>
+            )}
           </div>
           <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
             {icon}

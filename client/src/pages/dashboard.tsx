@@ -22,9 +22,10 @@ import { formatDate, formatDateRelative, getInitials } from "@/lib/utils";
 import { Project, ProjectUpdate, User, Event, Activity } from "@shared/schema";
 import { Separator } from "@/components/ui/separator";
 import { STATUS_COLORS } from "@/lib/constants";
-import { addDays, format, isSameDay, isSameMonth } from "date-fns";
+import { addDays, format, isSameDay, isSameMonth, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
+import { GanttChart } from "@/components/gantt/gantt-chart";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("lista");
@@ -68,18 +69,22 @@ export default function Dashboard() {
   // Fetch upcoming events
   const { data: upcomingEvents } = useQuery<Event[]>({
     queryKey: ["/api/events", {
-      startDate: new Date().toISOString(),
-      endDate: addDays(new Date(), 30).toISOString()
+      startDate: format(startOfMonth(currentMonth), 'yyyy-MM-dd'),
+      endDate: format(endOfMonth(currentMonth), 'yyyy-MM-dd')
     }],
     queryFn: async () => {
-      const start = new Date();
-      const end = addDays(start, 30);
-      const response = await fetch(`/api/events?startDate=${start.toISOString()}&endDate=${end.toISOString()}`, {
+      const queryParams = new URLSearchParams();
+      queryParams.append("startDate", format(startOfMonth(currentMonth), 'yyyy-MM-dd'));
+      queryParams.append("endDate", format(endOfMonth(currentMonth), 'yyyy-MM-dd'));
+      
+      const response = await fetch(`/api/events?${queryParams.toString()}`, {
         credentials: "include"
       });
       if (!response.ok) throw new Error("Failed to fetch events");
       return response.json();
-    }
+    },
+    staleTime: 0,
+    refetchOnWindowFocus: true
   });
   
   // Fetch overdue activities
@@ -103,7 +108,10 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <div>
+          <h1 className="text-2xl font-semibold">Bem-vindo ao ProjectPulse</h1>
+          <p className="text-muted-foreground mt-1">Gerencie seus projetos de forma eficiente</p>
+        </div>
         
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => {
@@ -196,49 +204,33 @@ export default function Dashboard() {
       </div>
       
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <DashboardCard
           title="Total de Projetos"
           value={stats?.totalProjects || 0}
-          icon={<Folder className="h-5 w-5 text-primary" />}
-          trend={{
-            value: 12,
-            label: "desde o mês passado",
-            positive: true
-          }}
+          icon={<Folder className="h-4 w-4 text-muted-foreground" />}
+          description="Projetos cadastrados"
         />
         
         <DashboardCard
-          title="Em Andamento"
+          title="Projetos Ativos"
           value={stats?.activeProjects || 0}
-          icon={<Clock className="h-5 w-5 text-warning" />}
-          trend={{
-            value: 5,
-            label: "desde o mês passado",
-            positive: true
-          }}
+          icon={<Clock className="h-4 w-4 text-muted-foreground" />}
+          description="Em andamento"
         />
         
         <DashboardCard
-          title="Atrasados"
+          title="Projetos Atrasados"
           value={stats?.delayedProjects || 0}
-          icon={<AlertTriangle className="h-5 w-5 text-destructive" />}
-          trend={{
-            value: 3,
-            label: "desde o mês passado",
-            positive: false
-          }}
+          icon={<AlertTriangle className="h-4 w-4 text-muted-foreground" />}
+          description="Com atraso"
         />
         
         <DashboardCard
-          title="Concluídos"
+          title="Projetos Finalizados"
           value={stats?.completedProjects || 0}
-          icon={<CheckCircle className="h-5 w-5 text-success" />}
-          trend={{
-            value: 18,
-            label: "desde o mês passado",
-            positive: true
-          }}
+          icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
+          description="Concluídos"
         />
       </div>
       
@@ -394,11 +386,7 @@ export default function Dashboard() {
             </TabsContent>
             
             <TabsContent value="gantt" className="mt-4">
-              <div className="h-64 flex items-center justify-center border border-dashed border-gray-300 rounded-lg">
-                <div className="text-center">
-                  <p className="text-muted-foreground">Visualização Gantt em breve</p>
-                </div>
-              </div>
+              <GanttChart />
             </TabsContent>
           </Tabs>
         </CardContent>

@@ -51,15 +51,17 @@ export function CalendarView({ projectId }: CalendarViewProps) {
     queryFn: async () => {
       const queryParams = new URLSearchParams();
       if (projectId) queryParams.append("projectId", projectId.toString());
-      queryParams.append("startDate", startDate.toISOString());
-      queryParams.append("endDate", endDate.toISOString());
+      queryParams.append("startDate", format(startDate, 'yyyy-MM-dd'));
+      queryParams.append("endDate", format(endDate, 'yyyy-MM-dd'));
       
       const response = await fetch(`/api/events?${queryParams.toString()}`, {
         credentials: "include"
       });
       if (!response.ok) throw new Error("Failed to fetch events");
       return response.json();
-    }
+    },
+    staleTime: 0, // Sempre buscar dados frescos
+    refetchOnWindowFocus: true, // Recarregar quando a janela receber foco
   });
 
   // If projectId is provided, fetch project information
@@ -71,19 +73,33 @@ export function CalendarView({ projectId }: CalendarViewProps) {
   // Transform API events into calendar events
   useEffect(() => {
     if (eventsData) {
-      const transformedEvents: CalendarEvent[] = eventsData.map(event => ({
-        id: event.id,
-        title: event.title,
-        description: event.description || undefined,
-        startDate: new Date(event.startDate),
-        endDate: event.endDate ? new Date(event.endDate) : undefined,
-        location: event.location || undefined,
-        projectId: event.projectId || undefined,
-        subprojectId: event.subprojectId || undefined,
-        type: "event",
-        color: "bg-primary-light/20 text-primary"
-      }));
+      console.log("Eventos recebidos:", eventsData);
+      const transformedEvents: CalendarEvent[] = eventsData.map(event => {
+        const startDate = new Date(event.startDate);
+        const endDate = event.endDate ? new Date(event.endDate) : undefined;
+        
+        console.log("Transformando evento:", {
+          id: event.id,
+          title: event.title,
+          startDate,
+          endDate
+        });
+
+        return {
+          id: event.id,
+          title: event.title,
+          description: event.description || undefined,
+          startDate,
+          endDate,
+          location: event.location || undefined,
+          projectId: event.projectId || undefined,
+          subprojectId: event.subprojectId || undefined,
+          type: "event",
+          color: "bg-primary-light/20 text-primary"
+        };
+      });
       
+      console.log("Eventos transformados:", transformedEvents);
       setEvents(transformedEvents);
     }
   }, [eventsData]);
@@ -120,9 +136,22 @@ export function CalendarView({ projectId }: CalendarViewProps) {
       for (let i = 0; i < 7; i++) {
         formattedDate = format(day, dateFormat);
         const cloneDay = day;
-        const dayEvents = events.filter(event => 
-          isSameDay(parseISO(event.startDate.toString()), cloneDay)
-        );
+        
+        // Filtrar eventos para o dia atual
+        const dayEvents = events.filter(event => {
+          const eventDate = new Date(event.startDate);
+          const isSameDay = eventDate.getDate() === cloneDay.getDate() &&
+                           eventDate.getMonth() === cloneDay.getMonth() &&
+                           eventDate.getFullYear() === cloneDay.getFullYear();
+          
+          console.log("Verificando evento:", {
+            eventDate,
+            cloneDay,
+            isSameDay
+          });
+          
+          return isSameDay;
+        });
 
         days.push(
           <div

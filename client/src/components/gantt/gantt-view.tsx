@@ -7,216 +7,192 @@
  * proporcionalmente no intervalo de tempo do projeto.
  */
 
-import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Subproject } from "@shared/schema";
+import { format, addDays, differenceInDays, startOfMonth, endOfMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Project, Subproject, Activity } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDate } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
 import { STATUS_COLORS } from "@/lib/constants";
 
 interface GanttViewProps {
-  projectId?: number;
-  subprojectId?: number;
+  projectId: number;
 }
 
-export function GanttView({ projectId, subprojectId }: GanttViewProps) {
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [subprojects, setSubprojects] = useState<Subproject[]>([]);
-  const [timeRange, setTimeRange] = useState<Date[]>([]);
-  const [loading, setLoading] = useState(true);
+export function GanttView({ projectId }: GanttViewProps) {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // Buscar subprojetos se o projectId for fornecido
-  const { data: projectSubprojects, isLoading: isSubprojectsLoading } = useQuery<Subproject[]>({
+  // Buscar projeto
+  const { data: project } = useQuery<Project>({
+    queryKey: [`/api/projects/${projectId}`],
+  });
+
+  // Buscar subprojetos
+  const { data: subprojects } = useQuery<Subproject[]>({
     queryKey: [`/api/projects/${projectId}/subprojects`],
-    enabled: !!projectId,
   });
 
-  // Buscar atividades com base no subprojectId
-  const { data: subprojectActivities, isLoading: isActivitiesLoading } = useQuery<Activity[]>({
-    queryKey: [`/api/subprojects/${subprojectId}/activities`],
-    enabled: !!subprojectId,
+  // Buscar atividades
+  const { data: activities } = useQuery<Activity[]>({
+    queryKey: ["/api/activities"],
+    queryFn: async () => {
+      const res = await fetch(`/api/activities?projectId=${projectId}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch activities");
+      return res.json();
+    },
   });
 
-  // Calcular o intervalo de tempo para o gráfico de Gantt
-  useEffect(() => {
-    if (projectSubprojects?.length && !subprojectId) {
-      setSubprojects(projectSubprojects);
-    }
+  // Calcular datas para o gráfico
+  const startDate = startOfMonth(currentMonth);
+  const endDate = endOfMonth(addDays(currentMonth, 30));
+  const totalDays = differenceInDays(endDate, startDate) + 1;
 
-    if (subprojectActivities?.length) {
-      setActivities(subprojectActivities);
+  // Renderizar cabeçalho com datas
+  const renderDateHeader = () => {
+    const dates = [];
+    for (let i = 0; i < totalDays; i++) {
+      const date = addDays(startDate, i);
+      dates.push(
+        <div 
+          key={i} 
+          className="min-w-[100px] text-center text-sm border-r border-gray-200 py-2"
+        >
+          {format(date, "dd/MM", { locale: ptBR })}
+        </div>
+      );
     }
-
-    // Calcular datas mínima e máxima
-    const allItems = [...(activities || [])];
-    
-    if (allItems.length > 0) {
-      const dates = allItems.flatMap(item => [
-        item.startDate ? new Date(item.startDate) : null,
-        item.dueDate ? new Date(item.dueDate) : null
-      ]).filter((date): date is Date => date !== null);
-      
-      if (dates.length > 0) {
-        const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
-        const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
-        
-        // Adicionar margem de 7 dias antes e depois
-        minDate.setDate(minDate.getDate() - 7);
-        maxDate.setDate(maxDate.getDate() + 7);
-        
-        setTimeRange([minDate, maxDate]);
-      }
-    }
-    
-    setLoading(false);
-  }, [projectSubprojects, subprojectActivities, projectId, subprojectId]);
-
-  // Gerar as datas para o cabeçalho
-  const generateDateHeaders = () => {
-    if (timeRange.length !== 2) return [];
-    
-    const [start, end] = timeRange;
-    const dateHeaders = [];
-    const currentDate = new Date(start);
-    
-    while (currentDate <= end) {
-      dateHeaders.push(new Date(currentDate));
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    return dateHeaders;
+    return dates;
   };
 
-  const dateHeaders = generateDateHeaders();
+  // Renderizar barra do Gantt
+  const renderGanttBar = (item: Project | Subproject | Activity) => {
+    const start = new Date(item.startDate || "");
+    const end = new Date(item.endDate || "");
+    
+    const startOffset = differenceInDays(start, startDate);
+    const duration = differenceInDays(end, start) + 1;
+    
+    const isDelayed = "isDelayed" in item ? item.isDelayed : false;
+    const status = "status" in item ? item.status : "Em andamento";
 
-  // Calcular a posição e largura de cada barra no gráfico
-  const calculateBarPosition = (startDate: Date | string | null, endDate: Date | string | null) => {
-    if (!startDate || !endDate || timeRange.length !== 2) return { left: 0, width: 0 };
-    
-    const start = startDate instanceof Date ? startDate : new Date(startDate);
-    const end = endDate instanceof Date ? endDate : new Date(endDate);
-    const [rangeStart, rangeEnd] = timeRange;
-    
-    const totalDays = Math.round((rangeEnd.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24));
-    const startDays = Math.max(0, Math.round((start.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24)));
-    const duration = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-    
-    const left = (startDays / totalDays) * 100;
-    const width = (duration / totalDays) * 100;
-    
-    return { left, width };
-  };
-
-  if (isSubprojectsLoading || isActivitiesLoading || loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Visualização Gantt</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div 
+        className="relative h-8"
+        style={{
+          marginLeft: `${startOffset * 100}px`,
+          width: `${duration * 100}px`,
+        }}
+      >
+        <div 
+          className={`absolute inset-0 rounded-md ${
+            isDelayed 
+              ? "bg-destructive/20 border border-destructive" 
+              : STATUS_COLORS[status as keyof typeof STATUS_COLORS]?.bg || "bg-primary/20"
+          }`}
+        >
+          <div className="absolute inset-0 flex items-center justify-center text-xs font-medium truncate px-2">
+            {item.name}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
-  }
+  };
 
-  if (dateHeaders.length === 0) {
+  const handlePreviousMonth = () => {
+    setCurrentMonth(prev => addDays(prev, -30));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth(prev => addDays(prev, 30));
+  };
+
+  if (!project) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Visualização Gantt</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">
-              Sem dados suficientes para exibir o gráfico Gantt. Adicione atividades com datas de início e término.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="text-center py-10">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
     );
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Visualização Gantt</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle>Gráfico Gantt</CardTitle>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={handlePreviousMonth}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm font-medium">
+            {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
+          </span>
+          <Button variant="outline" size="icon" onClick={handleNextMonth}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <div className="min-w-[800px]">
-          {/* Cabeçalho de datas */}
-          <div className="flex border-b">
-            <div className="w-1/4 min-w-[200px] p-2 font-medium">Tarefa</div>
-            <div className="w-3/4 flex">
-              {dateHeaders.map((date, i) => (
-                <div 
-                  key={i} 
-                  className={`flex-1 text-center text-xs p-1 ${date.getDay() === 0 || date.getDay() === 6 ? 'bg-slate-100' : ''}`}
-                >
-                  {date.getDate()}/{date.getMonth() + 1}
+      <CardContent>
+        <ScrollArea className="h-[600px]">
+          <div className="min-w-full">
+            {/* Cabeçalho com datas */}
+            <div className="flex sticky top-0 bg-white z-10 border-b">
+              <div className="w-[200px] p-2 font-medium border-r">Item</div>
+              <div className="flex">
+                {renderDateHeader()}
+              </div>
+            </div>
+
+            {/* Projeto */}
+            <div className="border-b">
+              <div className="flex">
+                <div className="w-[200px] p-2 border-r">
+                  <div className="font-medium">{project.name}</div>
+                  <Badge variant="outline" className="mt-1">
+                    {project.status}
+                  </Badge>
+                </div>
+                <div className="flex-1 relative">
+                  {renderGanttBar(project)}
+                </div>
+              </div>
+
+              {/* Subprojetos */}
+              {subprojects?.map(subproject => (
+                <div key={subproject.id} className="flex pl-8 border-b">
+                  <div className="w-[200px] p-2 border-r">
+                    <div className="font-medium">{subproject.name}</div>
+                    <Badge variant="outline" className="mt-1">
+                      {subproject.status}
+                    </Badge>
+                  </div>
+                  <div className="flex-1 relative">
+                    {renderGanttBar(subproject)}
+                  </div>
+                </div>
+              ))}
+
+              {/* Atividades */}
+              {activities?.map(activity => (
+                <div key={activity.id} className="flex pl-16 border-b">
+                  <div className="w-[200px] p-2 border-r">
+                    <div className="font-medium">{activity.name}</div>
+                    <Badge variant="outline" className="mt-1">
+                      {activity.status}
+                    </Badge>
+                  </div>
+                  <div className="flex-1 relative">
+                    {renderGanttBar(activity)}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Linhas de atividades */}
-          {activities.map((activity) => (
-            <div key={activity.id} className="flex border-b hover:bg-slate-50">
-              <div className="w-1/4 min-w-[200px] p-2 truncate">
-                {activity.name}
-              </div>
-              <div className="w-3/4 relative h-10">
-                {activity.startDate && activity.dueDate && (
-                  <div 
-                    className="absolute top-2 bottom-2 rounded-md"
-                    style={{
-                      left: `${calculateBarPosition(activity.startDate, activity.dueDate).left}%`,
-                      width: `${calculateBarPosition(activity.startDate, activity.dueDate).width}%`,
-                      backgroundColor: STATUS_COLORS[activity.status as keyof typeof STATUS_COLORS]?.bg || '#3b82f6',
-                    }}
-                  >
-                    <div className="h-full w-full flex items-center justify-center text-xs text-white overflow-hidden">
-                      {activity.name}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {/* Se estamos visualizando um projeto, mostrar também os subprojetos */}
-          {projectId && !subprojectId && subprojects.map((subproject) => (
-            <div key={subproject.id} className="flex border-b hover:bg-slate-50">
-              <div className="w-1/4 min-w-[200px] p-2 font-medium truncate">
-                {subproject.name}
-              </div>
-              <div className="w-3/4 relative h-10">
-                {subproject.startDate && subproject.endDate && (
-                  <div 
-                    className="absolute top-2 bottom-2 rounded-md"
-                    style={{
-                      left: `${calculateBarPosition(subproject.startDate, subproject.endDate).left}%`,
-                      width: `${calculateBarPosition(subproject.startDate, subproject.endDate).width}%`,
-                      backgroundColor: STATUS_COLORS[subproject.status as keyof typeof STATUS_COLORS]?.bg || '#4b5563',
-                    }}
-                  >
-                    <div className="h-full w-full flex items-center justify-center text-xs text-white overflow-hidden">
-                      {subproject.name}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {activities.length === 0 && (!subprojects || subprojects.length === 0) && (
-            <div className="text-center py-5">
-              <p className="text-muted-foreground">Sem atividades ou subprojetos para exibir.</p>
-            </div>
-          )}
-        </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );

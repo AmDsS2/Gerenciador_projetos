@@ -39,12 +39,17 @@ const projectFormSchema = insertProjectSchema.extend({
   startDate: z.date().optional(),
   endDate: z.date().optional(),
   sla: z.number().optional(),
+  checklist: z.array(z.object({
+    title: z.string(),
+    completed: z.boolean()
+  })).optional(),
+  id: z.number().optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
 interface ProjectFormProps {
-  initialValues?: ProjectFormValues;
+  initialValues?: ProjectFormValues & { id?: number };
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -68,20 +73,34 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
       status: "Em andamento",
       municipality: "",
       checklist: DEFAULT_PROJECT_CHECKLIST,
+      startDate: new Date(),
+      endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+      sla: 30,
     },
   });
 
   const mutation = useMutation({
     mutationFn: async (data: ProjectFormValues) => {
       // Include checklist state in the submitted data
-      data.checklist = checklist;
+      const projectData = {
+        ...data,
+        checklist: checklist as { title: string; completed: boolean }[],
+        responsibleId: 1, // ID do usuário admin
+      };
       
-      if (initialValues) {
+      // Remove id from projectData if it exists
+      if (projectData.id) {
+        delete projectData.id;
+      }
+      
+      console.log("Enviando dados do projeto:", projectData);
+      
+      if (initialValues?.id) {
         // Update existing project
-        return apiRequest("PUT", `/api/projects/${initialValues.id}`, data);
+        return apiRequest("PUT", `/api/projects/${initialValues.id}`, projectData);
       } else {
         // Create new project
-        return apiRequest("POST", "/api/projects", data);
+        return apiRequest("POST", "/api/projects", projectData);
       }
     },
     onSuccess: () => {
@@ -94,10 +113,11 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
       });
       onSuccess();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      console.error("Erro na mutação:", error);
       toast({
         title: "Erro",
-        description: `Ocorreu um erro ao ${initialValues ? "atualizar" : "criar"} o projeto.`,
+        description: `Ocorreu um erro ao ${initialValues ? "atualizar" : "criar"} o projeto: ${error.message}`,
         variant: "destructive",
       });
     },
@@ -145,11 +165,19 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome do Projeto *</FormLabel>
+                  <FormLabel htmlFor="project-name">Nome do Projeto *</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Nome do projeto" />
+                    <Input 
+                      id="project-name"
+                      name="project-name"
+                      autoComplete="off"
+                      aria-required="true"
+                      aria-describedby="project-name-error"
+                      {...field} 
+                      placeholder="Nome do projeto" 
+                    />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage id="project-name-error" />
                 </FormItem>
               )}
             />
@@ -159,15 +187,21 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
+                  <FormLabel htmlFor="project-description">Descrição</FormLabel>
                   <FormControl>
                     <Textarea
+                      id="project-description"
+                      name="project-description"
+                      autoComplete="off"
+                      aria-label="Descrição do projeto"
+                      aria-describedby="project-description-error"
                       {...field}
                       placeholder="Descrição detalhada do projeto"
                       rows={3}
+                      value={field.value ?? ""}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage id="project-description-error" />
                 </FormItem>
               )}
             />
@@ -178,24 +212,29 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status *</FormLabel>
+                    <FormLabel htmlFor="project-status">Status *</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger 
+                          id="project-status" 
+                          name="project-status"
+                          aria-required="true"
+                          aria-describedby="project-status-error"
+                        >
                           <SelectValue placeholder="Selecione o status" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="Em andamento">Em andamento</SelectItem>
-                        <SelectItem value="Aguardando">Aguardando</SelectItem>
-                        <SelectItem value="Finalizado">Finalizado</SelectItem>
+                        <SelectItem value="Concluído">Concluído</SelectItem>
                         <SelectItem value="Atrasado">Atrasado</SelectItem>
+                        <SelectItem value="Cancelado">Cancelado</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage id="project-status-error" />
                   </FormItem>
                 )}
               />
@@ -205,11 +244,20 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
                 name="municipality"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Município</FormLabel>
+                    <FormLabel htmlFor="project-municipality">Município</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Nome do município" />
+                      <Input 
+                        id="project-municipality"
+                        name="project-municipality"
+                        autoComplete="address-level2"
+                        aria-label="Município do projeto"
+                        aria-describedby="project-municipality-error"
+                        {...field} 
+                        placeholder="Município" 
+                        value={field.value ?? ""} 
+                      />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage id="project-municipality-error" />
                   </FormItem>
                 )}
               />
@@ -221,11 +269,16 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
                 name="startDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Data de Início</FormLabel>
+                    <FormLabel htmlFor="project-start-date">Data de Início</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
+                            id="project-start-date"
+                            name="project-start-date"
+                            type="button"
+                            aria-label="Selecionar data de início"
+                            aria-describedby="project-start-date-error"
                             variant={"outline"}
                             className={`w-full pl-3 text-left font-normal ${
                               !field.value ? "text-muted-foreground" : ""
@@ -253,7 +306,7 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
                         />
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <FormMessage id="project-start-date-error" />
                   </FormItem>
                 )}
               />
@@ -263,11 +316,16 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
                 name="endDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Data de Término</FormLabel>
+                    <FormLabel htmlFor="project-end-date">Data de Término</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
+                            id="project-end-date"
+                            name="project-end-date"
+                            type="button"
+                            aria-label="Selecionar data de término"
+                            aria-describedby="project-end-date-error"
                             variant={"outline"}
                             className={`w-full pl-3 text-left font-normal ${
                               !field.value ? "text-muted-foreground" : ""
@@ -294,7 +352,7 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
                         />
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <FormMessage id="project-end-date-error" />
                   </FormItem>
                 )}
               />
@@ -306,13 +364,18 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
                 name="responsibleId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Responsável</FormLabel>
+                    <FormLabel htmlFor="project-responsible">Responsável</FormLabel>
                     <Select
                       onValueChange={(value) => field.onChange(parseInt(value))}
                       defaultValue={field.value?.toString()}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger 
+                          id="project-responsible" 
+                          name="project-responsible"
+                          aria-label="Selecionar responsável"
+                          aria-describedby="project-responsible-error"
+                        >
                           <SelectValue placeholder="Selecione um responsável" />
                         </SelectTrigger>
                       </FormControl>
@@ -324,7 +387,7 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage id="project-responsible-error" />
                   </FormItem>
                 )}
               />
@@ -334,13 +397,18 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
                 name="sla"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>SLA (Prazo de resposta)</FormLabel>
+                    <FormLabel htmlFor="project-sla">SLA (Prazo de resposta)</FormLabel>
                     <Select
                       onValueChange={(value) => field.onChange(parseInt(value))}
                       defaultValue={field.value?.toString()}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger 
+                          id="project-sla" 
+                          name="project-sla"
+                          aria-label="Selecionar SLA"
+                          aria-describedby="project-sla-error"
+                        >
                           <SelectValue placeholder="Selecione um SLA" />
                         </SelectTrigger>
                       </FormControl>
@@ -355,25 +423,31 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage id="project-sla-error" />
                   </FormItem>
                 )}
               />
             </div>
 
             <div>
-              <FormLabel>Checklist por Município</FormLabel>
-              <div className="mt-2 space-y-2">
+              <FormLabel htmlFor="project-checklist">Checklist por Município</FormLabel>
+              <div id="project-checklist" className="mt-2 space-y-2" role="list" aria-describedby="project-checklist-error">
                 {checklist.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2">
+                  <div key={index} className="flex items-center gap-2" role="listitem">
                     <Checkbox
                       id={`checklist-${index}`}
+                      name={`checklist-${index}`}
+                      aria-label={`Item ${index + 1} da checklist`}
                       checked={item.completed}
                       onCheckedChange={(checked) =>
                         updateChecklist(index, !!checked)
                       }
                     />
                     <Input
+                      id={`checklist-title-${index}`}
+                      name={`checklist-title-${index}`}
+                      autoComplete="off"
+                      aria-label={`Título do item ${index + 1}`}
                       value={item.title}
                       onChange={(e) =>
                         updateChecklistTitle(index, e.target.value)
@@ -386,6 +460,7 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
                       variant="ghost"
                       size="sm"
                       onClick={() => removeChecklistItem(index)}
+                      aria-label={`Remover item ${index + 1}`}
                     >
                       <span className="material-icons text-sm">delete</span>
                     </Button>
@@ -397,10 +472,12 @@ export function ProjectForm({ initialValues, onSuccess, onCancel }: ProjectFormP
                   size="sm"
                   onClick={addChecklistItem}
                   className="mt-2"
+                  aria-label="Adicionar novo item à checklist"
                 >
                   Adicionar Item
                 </Button>
               </div>
+              <FormMessage id="project-checklist-error" />
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">

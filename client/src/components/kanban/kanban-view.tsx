@@ -131,14 +131,42 @@ export function KanbanView({ projectId }: KanbanViewProps) {
 
   const handleDragStart = (activity: Activity) => {
     setDraggingItem(activity);
+    // Adiciona classe de opacidade ao elemento sendo arrastado
+    const element = document.querySelector(`[data-activity-id="${activity.id}"]`);
+    if (element) {
+      element.classList.add('opacity-50');
+    }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragEnd = () => {
+    // Remove classe de opacidade quando o arrasto termina
+    if (draggingItem) {
+      const element = document.querySelector(`[data-activity-id="${draggingItem.id}"]`);
+      if (element) {
+        element.classList.remove('opacity-50');
+      }
+    }
+    setDraggingItem(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, columnStatus: string) => {
     e.preventDefault();
+    // Adiciona feedback visual quando arrasta sobre uma coluna
+    const column = e.currentTarget as HTMLElement;
+    column.classList.add('bg-opacity-75');
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Remove feedback visual quando sai da coluna
+    const column = e.currentTarget as HTMLElement;
+    column.classList.remove('bg-opacity-75');
   };
 
   const handleDrop = (e: React.DragEvent, columnStatus: string) => {
     e.preventDefault();
+    const column = e.currentTarget as HTMLElement;
+    column.classList.remove('bg-opacity-75');
+
     if (draggingItem && draggingItem.status !== columnStatus) {
       updateActivityStatusMutation.mutate({
         id: draggingItem.id,
@@ -186,8 +214,9 @@ export function KanbanView({ projectId }: KanbanViewProps) {
               {columns.map((column) => (
                 <div
                   key={column.id}
-                  className={`${column.bgColor} min-w-[280px] w-[280px] rounded-lg shadow-sm flex flex-col h-[70vh]`}
-                  onDragOver={handleDragOver}
+                  className={`${column.bgColor} min-w-[280px] w-[280px] rounded-lg shadow-sm flex flex-col h-[70vh] transition-colors duration-200`}
+                  onDragOver={(e) => handleDragOver(e, column.status)}
+                  onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, column.status)}
                 >
                   <div className="p-3 border-b border-gray-200">
@@ -199,47 +228,41 @@ export function KanbanView({ projectId }: KanbanViewProps) {
                     </h3>
                   </div>
                   <ScrollArea className="flex-1 p-2">
-                    <div className="space-y-2">
-                      {column.items.map((activity) => (
-                        <div
-                          key={activity.id}
-                          className="bg-white rounded-lg shadow p-3 cursor-grab"
-                          draggable
-                          onDragStart={() => handleDragStart(activity)}
-                        >
-                          <div className="font-medium text-sm mb-1">
-                            {activity.name}
+                    {column.items.map((activity) => (
+                      <div
+                        key={activity.id}
+                        data-activity-id={activity.id}
+                        className="bg-white rounded-lg shadow-sm p-3 mb-2 cursor-move hover:shadow-md transition-shadow duration-200"
+                        draggable
+                        onDragStart={() => handleDragStart(activity)}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <h4 className="font-medium mb-2">{activity.name}</h4>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {activity.description}
+                        </p>
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarFallback>
+                                {getInitials(getUserName(activity.responsibleId))}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span>{getUserName(activity.responsibleId)}</span>
                           </div>
-                          {activity.description && (
-                            <div className="text-xs text-gray-500 mb-2 line-clamp-2">
-                              {activity.description}
-                            </div>
+                          {activity.dueDate && (
+                            <span className="text-gray-500">
+                              {formatDate(activity.dueDate)}
+                            </span>
                           )}
-                          <div className="flex items-center justify-between mt-2">
-                            <div className="flex items-center">
-                              <Avatar className="h-6 w-6 bg-primary">
-                                <AvatarFallback>
-                                  {getInitials(getUserName(activity.responsibleId))}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-xs ml-1 text-gray-600">
-                                {getUserName(activity.responsibleId)}
-                              </span>
-                            </div>
-                            {activity.dueDate && (
-                              <div className="text-xs text-gray-500">
-                                Vence: {formatDate(activity.dueDate)}
-                              </div>
-                            )}
-                          </div>
                         </div>
-                      ))}
-                      {column.items.length === 0 && (
-                        <div className="text-center py-4 text-sm text-gray-500">
-                          Nenhuma atividade
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    ))}
+                    {column.items.length === 0 && (
+                      <div className="text-center py-4 text-sm text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                        Arraste atividades para cá
+                      </div>
+                    )}
                   </ScrollArea>
                 </div>
               ))}
@@ -248,21 +271,23 @@ export function KanbanView({ projectId }: KanbanViewProps) {
         </CardContent>
       </Card>
 
-      {/* Create Activity Dialog */}
-      {selectedSubproject && (
-        <Dialog open={showCreateActivity} onOpenChange={setShowCreateActivity}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Nova Atividade</DialogTitle>
-            </DialogHeader>
+      <Dialog open={showCreateActivity} onOpenChange={setShowCreateActivity}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Nova Atividade</DialogTitle>
+          </DialogHeader>
+          {selectedSubproject && (
             <ActivityForm
               subprojectId={selectedSubproject}
-              onSuccess={() => setShowCreateActivity(false)}
+              onSuccess={() => {
+                setShowCreateActivity(false);
+                queryClient.invalidateQueries({ queryKey: [`/api/subprojects/${selectedSubproject}/activities`] });
+              }}
               onCancel={() => setShowCreateActivity(false)}
             />
-          </DialogContent>
-        </Dialog>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

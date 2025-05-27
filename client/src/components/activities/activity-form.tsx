@@ -219,6 +219,7 @@ export function ActivityForm({ subprojectId, initialValues, onSuccess, onCancel 
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="0">Não atribuído</SelectItem>
                         {users?.map((user) => (
                           <SelectItem key={user.id} value={user.id.toString()}>
                             {user.name}
@@ -333,6 +334,7 @@ export function ActivityForm({ subprojectId, initialValues, onSuccess, onCancel 
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="0">Sem SLA definido</SelectItem>
                       {SLA_OPTIONS.map((option) => (
                         <SelectItem
                           key={option.value}

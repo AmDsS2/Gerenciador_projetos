@@ -70,6 +70,7 @@ export interface IStorage {
   getEventsByProject(projectId: number): Promise<Event[]>;
   getEventsBySubproject(subprojectId: number): Promise<Event[]>;
   getEventsByDateRange(startDate: Date, endDate: Date): Promise<Event[]>;
+  listEvents(): Promise<Event[]>;
   
   // Audit logs operations
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
@@ -186,10 +187,13 @@ export class MemStorage implements IStorage {
     const existingProject = this.projects.get(id);
     if (!existingProject) return undefined;
     
+    // Preserve the original id and timestamps
     const updatedProject: Project = {
       ...existingProject,
       ...project,
-      updatedAt: new Date(),
+      id: existingProject.id, // Garante que o ID original seja mantido
+      createdAt: existingProject.createdAt, // Mantém a data de criação original
+      updatedAt: new Date(), // Atualiza apenas a data de atualização
     };
     
     // If status is changed, update the statusUpdatedAt
@@ -197,6 +201,7 @@ export class MemStorage implements IStorage {
       updatedProject.statusUpdatedAt = new Date();
     }
     
+    // Atualiza o projeto existente no Map
     this.projects.set(id, updatedProject);
     return updatedProject;
   }
@@ -468,12 +473,14 @@ export class MemStorage implements IStorage {
   }
   
   async getEventsByDateRange(startDate: Date, endDate: Date): Promise<Event[]> {
-    return Array.from(this.events.values()).filter(
-      (event) => {
-        const eventStartDate = new Date(event.startDate);
-        return eventStartDate >= startDate && eventStartDate <= endDate;
-      }
-    );
+    return Array.from(this.events.values()).filter(event => {
+      const eventStart = new Date(event.startDate);
+      return eventStart >= startDate && eventStart <= endDate;
+    });
+  }
+  
+  async listEvents(): Promise<Event[]> {
+    return Array.from(this.events.values());
   }
   
   // Audit logs operations
@@ -501,18 +508,13 @@ export class MemStorage implements IStorage {
     delayedProjects: number;
     completedProjects: number;
   }> {
-    const allProjects = await this.listProjects();
-    
-    const totalProjects = allProjects.length;
-    const activeProjects = allProjects.filter((p) => p.status === "Em andamento").length;
-    const delayedProjects = allProjects.filter((p) => p.isDelayed).length;
-    const completedProjects = allProjects.filter((p) => p.status === "Finalizado").length;
+    const allProjects = Array.from(this.projects.values());
     
     return {
-      totalProjects,
-      activeProjects,
-      delayedProjects,
-      completedProjects,
+      totalProjects: allProjects.length,
+      activeProjects: allProjects.filter(p => p.status === "Em andamento").length,
+      delayedProjects: allProjects.filter(p => p.isDelayed).length,
+      completedProjects: allProjects.filter(p => p.status === "Finalizado").length
     };
   }
 }

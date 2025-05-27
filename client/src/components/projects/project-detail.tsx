@@ -25,6 +25,9 @@ import { Edit, Trash2, Upload, Calendar, CheckSquare, ClipboardList, Plus, FileT
 import { ProjectForm } from "./project-form";
 import { AttachmentForm } from "@/components/attachments/attachment-form";
 import { STATUS_COLORS } from "@/lib/constants";
+import { Overview } from "./overview";
+import { SubprojectsList } from "./subprojects-list";
+import { KanbanBoard } from "../kanban/kanban-board";
 
 interface ProjectDetailProps {
   projectId: number;
@@ -195,283 +198,38 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
   }
 
   return (
-    <>
-      <div className="space-y-6">
-        {/* Project Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold">{project.name}</h1>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge 
-                variant="outline" 
-                className={`${STATUS_COLORS[project.status as keyof typeof STATUS_COLORS]?.bg} ${STATUS_COLORS[project.status as keyof typeof STATUS_COLORS]?.text}`}
-              >
-                {project.status}
-              </Badge>
-              {project.municipality && (
-                <span className="text-sm text-muted-foreground">{project.municipality}</span>
-              )}
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowEditProject(true)}>
-              <Edit className="h-4 w-4 mr-2" />
-              Editar
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => setShowDeleteConfirm(true)}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir
-            </Button>
-            <Button variant="default" size="sm" onClick={() => setShowCreateSubproject(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Subprojeto
-            </Button>
-          </div>
-        </div>
-
-        {/* Project Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-5 md:w-[500px]">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="subprojects">Subprojetos</TabsTrigger>
-            <TabsTrigger value="kanban">Kanban</TabsTrigger>
-            <TabsTrigger value="calendar">Calendário</TabsTrigger>
-            <TabsTrigger value="gantt">Gantt</TabsTrigger>
-          </TabsList>
-
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Left Column - Project Details */}
-              <div className="space-y-6 md:col-span-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Detalhes do Projeto</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {project.description && (
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Descrição</h3>
-                        <p>{project.description}</p>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Data de Início</h3>
-                        <p>{formatDate(project.startDate) || "Não definida"}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Data de Término</h3>
-                        <p>{formatDate(project.endDate) || "Não definida"}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Responsável</h3>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6 bg-primary">
-                            <AvatarFallback>{getInitials(getResponsibleName(project.responsibleId))}</AvatarFallback>
-                          </Avatar>
-                          <span>{getResponsibleName(project.responsibleId)}</span>
-                        </div>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">SLA</h3>
-                        <p>{project.sla ? `${project.sla} dias` : "Não definido"}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Status atualizado em</h3>
-                        <p>{formatDateTime(project.statusUpdatedAt)}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Última atualização</h3>
-                        <p>{formatDateTime(project.updatedAt)}</p>
-                      </div>
-                    </div>
-
-                    {/* Attachments section */}
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-2">Anexos</h3>
-                      {attachments && attachments.length > 0 ? (
-                        <div className="space-y-2">
-                          {attachments.map((attachment) => (
-                            <div key={attachment.id} className="p-2 bg-gray-50 rounded-lg border border-gray-200 flex items-center">
-                              <FileText className="h-4 w-4 text-muted-foreground mr-2" />
-                              <span className="text-sm">{attachment.filename} ({Math.round(attachment.fileSize! / 1024)} KB)</span>
-                              <Button variant="ghost" size="sm" className="ml-auto p-1 h-auto">
-                                <span className="material-icons text-gray-500 text-sm">download</span>
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">Nenhum anexo disponível</p>
-                      )}
-                      
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="mt-2"
-                        onClick={() => setShowAddAttachment(true)}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Adicionar Anexo
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Daily Updates */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Atualizações Diárias</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-4">
-                      {updates && updates.length > 0 ? (
-                        updates.map((update) => (
-                          <div key={update.id} className="flex gap-4 pb-4 border-b border-gray-100">
-                            <Avatar className="h-10 w-10 bg-primary">
-                              <AvatarFallback>{getInitials(getResponsibleName(update.userId))}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{getResponsibleName(update.userId)}</span>
-                                <span className="text-muted-foreground text-sm">{formatDateTime(update.createdAt)}</span>
-                              </div>
-                              <p className="mt-1">{update.content}</p>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-muted-foreground">Nenhuma atualização registrada.</p>
-                      )}
-                    </div>
-
-                    <div className="pt-4">
-                      <Textarea
-                        placeholder="Adicione uma atualização diária..."
-                        value={newUpdate}
-                        onChange={(e) => setNewUpdate(e.target.value)}
-                        rows={3}
-                      />
-                      <Button 
-                        className="mt-2" 
-                        onClick={handleAddUpdate} 
-                        disabled={newUpdate.trim() === "" || addUpdateMutation.isPending}
-                      >
-                        {addUpdateMutation.isPending ? (
-                          <span className="animate-spin mr-2">⭘</span>
-                        ) : null}
-                        Adicionar Atualização
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Right Column - Checklist and Contacts */}
-              <div className="space-y-6">
-                {/* Checklist */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Checklist</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {project.checklist && project.checklist.length > 0 ? (
-                      <div className="space-y-2">
-                        {project.checklist.map((item, index) => (
-                          <div key={index} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`checklist-${index}`}
-                              checked={item.completed}
-                              onCheckedChange={(checked) => handleUpdateChecklistItem(index, !!checked)}
-                            />
-                            <label
-                              htmlFor={`checklist-${index}`}
-                              className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
-                                item.completed ? "line-through text-muted-foreground" : ""
-                              }`}
-                            >
-                              {item.title}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground text-sm">Nenhum item na checklist.</p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Contacts */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle>Contatos</CardTitle>
-                    <Button variant="ghost" size="sm" onClick={() => setShowAddContact(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Adicionar
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
-                    {contacts && contacts.length > 0 ? (
-                      <div className="space-y-4">
-                        {contacts.map((contact) => (
-                          <div key={contact.id} className="flex items-center gap-3">
-                            <Avatar className="h-10 w-10 bg-secondary">
-                              <AvatarFallback>{getInitials(contact.name)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium">{contact.name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {contact.role || "Sem cargo"}
-                              </div>
-                              {contact.email && (
-                                <div className="text-xs text-muted-foreground mt-1">
-                                  {contact.email}
-                                </div>
-                              )}
-                              {contact.phone && (
-                                <div className="text-xs text-muted-foreground">
-                                  {contact.phone}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">Nenhum contato cadastrado.</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Subprojects Tab */}
-          <TabsContent value="subprojects">
-            <SubprojectList 
-              projectId={projectId} 
-              onCreateSubproject={() => setShowCreateSubproject(true)} 
-            />
-          </TabsContent>
-
-          {/* Kanban Tab */}
-          <TabsContent value="kanban">
-            <KanbanView projectId={projectId} />
-          </TabsContent>
-
-          {/* Calendar Tab */}
-          <TabsContent value="calendar">
-            <CalendarView projectId={projectId} />
-          </TabsContent>
-
-          {/* Gantt Tab */}
-          <TabsContent value="gantt">
-            <GanttView projectId={projectId} />
-          </TabsContent>
-        </Tabs>
-      </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>{project.name}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList>
+              <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+              <TabsTrigger value="subprojects">Subprojetos</TabsTrigger>
+              <TabsTrigger value="kanban">Kanban</TabsTrigger>
+              <TabsTrigger value="calendar">Calendário</TabsTrigger>
+              <TabsTrigger value="gantt">Gantt</TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview">
+              <Overview project={project} />
+            </TabsContent>
+            <TabsContent value="subprojects">
+              <SubprojectsList projectId={projectId} />
+            </TabsContent>
+            <TabsContent value="kanban">
+              <KanbanBoard projectId={projectId} />
+            </TabsContent>
+            <TabsContent value="calendar">
+              <CalendarView projectId={projectId} />
+            </TabsContent>
+            <TabsContent value="gantt">
+              <GanttView projectId={projectId} />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       {/* Edit Project Dialog */}
       <Dialog open={showEditProject} onOpenChange={setShowEditProject}>
@@ -564,6 +322,6 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
           />
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

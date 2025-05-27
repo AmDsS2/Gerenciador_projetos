@@ -36,7 +36,17 @@ const eventFormSchema = insertEventSchema.extend({
   endDate: z.date().optional(),
 });
 
-type EventFormValues = z.infer<typeof eventFormSchema>;
+interface EventFormValues {
+  title: string;
+  description?: string | null;
+  location?: string | null;
+  projectId?: number | null;
+  subprojectId?: number | null;
+  startDate: Date;
+  endDate?: Date;
+  createdBy: number;
+  id?: number;
+}
 
 interface EventFormProps {
   projectId?: number;
@@ -66,22 +76,44 @@ export function EventForm({ projectId, subprojectId, initialValues, onSuccess, o
       subprojectId: subprojectId || null,
       startDate: initialValues?.startDate || new Date(),
       endDate: initialValues?.endDate || undefined,
+      createdBy: 1,
     },
   });
 
   const mutation = useMutation({
     mutationFn: async (data: EventFormValues) => {
-      if (initialValues?.id) {
-        // Update existing event
-        return apiRequest("PUT", `/api/events/${initialValues.id}`, data);
+      // Garantir que as datas sejam válidas
+      if (!(data.startDate instanceof Date) || isNaN(data.startDate.getTime())) {
+        throw new Error("Data de início inválida");
+      }
+
+      if (data.endDate && (!(data.endDate instanceof Date) || isNaN(data.endDate.getTime()))) {
+        throw new Error("Data de término inválida");
+      }
+
+      const eventData = {
+        title: data.title.trim(),
+        description: data.description?.trim() || "",
+        location: data.location?.trim() || "",
+        projectId: data.projectId || null,
+        subprojectId: data.subprojectId || null,
+        startDate: data.startDate.toISOString(),
+        endDate: data.endDate ? data.endDate.toISOString() : null,
+        createdBy: 1,
+      };
+
+      console.log("Enviando dados do evento:", eventData);
+
+      if (data.id) {
+        return apiRequest("PUT", `/api/events/${data.id}`, eventData);
       } else {
-        // Create new event
-        return apiRequest("POST", "/api/events", data);
+        return apiRequest("POST", "/api/events", eventData);
       }
     },
     onSuccess: () => {
-      // Invalidate relevant queries
+      // Invalidar todas as queries relacionadas a eventos
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       
       toast({
         title: initialValues?.id ? "Evento atualizado" : "Evento criado",
@@ -92,17 +124,23 @@ export function EventForm({ projectId, subprojectId, initialValues, onSuccess, o
       onSuccess();
     },
     onError: (error) => {
-      console.error("Error saving event:", error);
+      console.error("Erro ao salvar evento:", error);
       toast({
         title: "Erro",
-        description: `Ocorreu um erro ao ${initialValues?.id ? "atualizar" : "criar"} o evento.`,
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao salvar o evento.",
         variant: "destructive",
       });
     },
   });
 
   const onSubmit = (data: EventFormValues) => {
-    mutation.mutate(data);
+    const formData = {
+      ...data,
+      description: data.description?.trim() || "",
+      location: data.location?.trim() || "",
+      id: initialValues?.id,
+    };
+    mutation.mutate(formData);
   };
 
   return (
@@ -131,6 +169,7 @@ export function EventForm({ projectId, subprojectId, initialValues, onSuccess, o
               <FormControl>
                 <Textarea
                   {...field}
+                  value={field.value || ""}
                   placeholder="Descreva o evento detalhadamente"
                   rows={3}
                 />
@@ -147,7 +186,7 @@ export function EventForm({ projectId, subprojectId, initialValues, onSuccess, o
             <FormItem>
               <FormLabel>Local</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Local do evento" />
+                <Input {...field} value={field.value || ""} placeholder="Local do evento" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -258,7 +297,7 @@ export function EventForm({ projectId, subprojectId, initialValues, onSuccess, o
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="0">Nenhum</SelectItem>
                     {/* Project options would go here */}
                   </SelectContent>
                 </Select>
@@ -289,7 +328,7 @@ export function EventForm({ projectId, subprojectId, initialValues, onSuccess, o
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="0">Nenhum</SelectItem>
                     {subprojects?.map((subproject) => (
                       <SelectItem
                         key={subproject.id}

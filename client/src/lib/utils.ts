@@ -7,18 +7,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: Date | string | null | undefined): string {
+export function formatDate(date: string | null | undefined): string {
   if (!date) return "";
-  
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  return format(dateObj, "dd/MM/yyyy", { locale: ptBR });
+  return format(new Date(date), "dd/MM/yyyy", { locale: ptBR });
 }
 
-export function formatDateTime(date: Date | string | null | undefined): string {
-  if (!date) return "";
-  
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  return format(dateObj, "dd/MM/yyyy HH:mm", { locale: ptBR });
+export function formatDateTime(date: Date | string): string {
+  return format(new Date(date), "dd/MM/yyyy HH:mm", { locale: ptBR });
 }
 
 export function formatDateRelative(date: Date | string): string {
@@ -59,8 +54,7 @@ export function getInitials(name: string): string {
     .split(" ")
     .map((n) => n[0])
     .join("")
-    .toUpperCase()
-    .substring(0, 2);
+    .toUpperCase();
 }
 
 export function getRandomColor(): string {
@@ -75,4 +69,9 @@ export function getRandomColor(): string {
   ];
   
   return colors[Math.floor(Math.random() * colors.length)];
+}
+
+export function getResponsibleName(id: number | null): string {
+  // TODO: Implementar busca do nome do responsável
+  return "Responsável";
 }
