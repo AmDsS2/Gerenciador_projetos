@@ -22,7 +22,8 @@ export default defineConfig({
         "drizzle-zod",
         "pg",
         "postgres",
-        "zod"
+        "zod",
+        "react-router-dom"
       ],
       output: {
         manualChunks: {
