@@ -27,11 +27,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { z } from "zod";
 
 // Extend the insert schema with additional validation
 const eventFormSchema = insertEventSchema.extend({
-  startDate: z.date(),
-  endDate: z.date().optional(),
+  startDate: z.date().transform((date) => date.toISOString()),
+  endDate: z.date().optional().transform((date) => date?.toISOString() || null),
 });
 
 interface EventFormValues {
@@ -40,8 +41,8 @@ interface EventFormValues {
   location?: string | null;
   projectId?: number | null;
   subprojectId?: number | null;
-  startDate: Date;
-  endDate?: Date;
+  startDate: string;
+  endDate?: string | null;
   createdBy: number;
   id?: number;
 }
@@ -72,8 +73,8 @@ export function EventForm({ projectId, subprojectId, initialValues, onSuccess, o
       location: initialValues?.location || "",
       projectId: projectId || null,
       subprojectId: subprojectId || null,
-      startDate: initialValues?.startDate || new Date(),
-      endDate: initialValues?.endDate || undefined,
+      startDate: initialValues?.startDate || new Date().toISOString(),
+      endDate: initialValues?.endDate || null,
       createdBy: 1,
     },
   });

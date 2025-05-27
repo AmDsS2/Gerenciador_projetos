@@ -1,12 +1,19 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
-import { createServer as createViteServer, createLogger } from "vite";
+import { createServer } from 'vite';
+import { ViteDevServer } from 'vite';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+import { createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../client/vite.config";
 import { nanoid } from "nanoid";
 
 const viteLogger = createLogger();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -25,7 +32,7 @@ export async function setupVite(app: Express, server: Server) {
     hmr: { server }
   };
 
-  const vite = await createViteServer({
+  const vite = await createServer({
     ...viteConfig,
     configFile: false,
     customLogger: {
@@ -81,4 +88,23 @@ export function serveStatic(app: Express) {
   app.use("*", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
+}
+
+export async function setupViteServer(): Promise<ViteDevServer> {
+  const server = await createServer({
+    root: resolve(__dirname, '../client'),
+    server: {
+      port: 3000,
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          secure: false
+        }
+      }
+    }
+  });
+
+  await server.listen();
+  return server;
 }

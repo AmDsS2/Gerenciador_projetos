@@ -1,5 +1,6 @@
-import { IStorage } from "../storage";
+import { IStorage, UpdateProject, UpdateActivity } from "../storage";
 import { differenceInDays } from "date-fns";
+import { Project, Activity } from "@shared/types";
 
 // Function to check if projects are delayed based on SLA
 async function checkProjectDelays(storage: IStorage) {
@@ -22,6 +23,7 @@ async function checkProjectDelays(storage: IStorage) {
       // If days until due is less than SLA and project is not already marked as delayed
       if (daysUntilDue < 0 && !project.isDelayed) {
         await storage.updateProject(project.id, {
+          status: project.status,
           isDelayed: true,
         });
         
@@ -30,6 +32,7 @@ async function checkProjectDelays(storage: IStorage) {
       // If project was delayed but is now within SLA range
       else if (daysUntilDue >= 0 && project.isDelayed) {
         await storage.updateProject(project.id, {
+          status: project.status,
           isDelayed: false,
         });
         
@@ -43,15 +46,9 @@ async function checkProjectDelays(storage: IStorage) {
 async function checkActivityDelays(storage: IStorage) {
   console.log("Running automation: Checking activity delays...");
   
-  const activities = await storage.listProjects().then((projects) => 
-    Promise.all(projects.flatMap(project => 
-      storage.getSubprojectsByProject(project.id).then(subprojects => 
-        Promise.all(subprojects.flatMap(subproject => 
-          storage.getActivitiesBySubproject(subproject.id)
-        ))
-      )
-    )).then(results => results.flat())
-  );
+  const projects = await storage.listProjects();
+  const subprojects = (await Promise.all(projects.map(p => storage.getSubprojectsByProject(p.id)))).flat();
+  const activities = (await Promise.all(subprojects.map(s => storage.getActivitiesBySubproject(s.id)))).flat();
   
   const now = new Date();
   
@@ -69,6 +66,7 @@ async function checkActivityDelays(storage: IStorage) {
       // If days until due is less than SLA and activity is not already marked as delayed
       if (daysUntilDue < 0 && !activity.isDelayed) {
         await storage.updateActivity(activity.id, {
+          status: activity.status,
           isDelayed: true,
         });
         
@@ -77,6 +75,7 @@ async function checkActivityDelays(storage: IStorage) {
       // If activity was delayed but is now within SLA range
       else if (daysUntilDue >= 0 && activity.isDelayed) {
         await storage.updateActivity(activity.id, {
+          status: activity.status,
           isDelayed: false,
         });
         

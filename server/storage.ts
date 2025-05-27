@@ -14,6 +14,9 @@ import {
   AuditLog, InsertAuditLog,
 } from "@shared/types";
 
+export type UpdateProject = Partial<InsertProject> & { isDelayed?: boolean };
+export type UpdateActivity = Partial<InsertActivity> & { isDelayed?: boolean };
+
 export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
@@ -24,7 +27,7 @@ export interface IStorage {
   // Project operations
   createProject(project: InsertProject): Promise<Project>;
   getProject(id: number): Promise<Project | undefined>;
-  updateProject(id: number, project: Partial<InsertProject>): Promise<Project | undefined>;
+  updateProject(id: number, project: UpdateProject): Promise<Project | undefined>;
   deleteProject(id: number): Promise<boolean>;
   listProjects(): Promise<Project[]>;
   getProjectsByResponsible(userId: number): Promise<Project[]>;
@@ -51,7 +54,7 @@ export interface IStorage {
   // Activity operations
   createActivity(activity: InsertActivity): Promise<Activity>;
   getActivity(id: number): Promise<Activity | undefined>;
-  updateActivity(id: number, activity: Partial<InsertActivity>): Promise<Activity | undefined>;
+  updateActivity(id: number, activity: UpdateActivity): Promise<Activity | undefined>;
   deleteActivity(id: number): Promise<boolean>;
   getActivitiesBySubproject(subprojectId: number): Promise<Activity[]>;
   getActivitiesByResponsible(userId: number): Promise<Activity[]>;
@@ -186,10 +189,9 @@ export class MemStorage implements IStorage {
     return this.projects.get(id);
   }
   
-  async updateProject(id: number, project: Partial<InsertProject>): Promise<Project | undefined> {
+  async updateProject(id: number, project: UpdateProject): Promise<Project | undefined> {
     const existingProject = this.projects.get(id);
     if (!existingProject) return undefined;
-    
     const now = new Date().toISOString();
     const updatedProject: Project = {
       ...existingProject,
@@ -198,11 +200,12 @@ export class MemStorage implements IStorage {
       createdAt: existingProject.createdAt,
       updatedAt: now,
     };
-    
     if (project.status && project.status !== existingProject.status) {
       updatedProject.statusUpdatedAt = now;
     }
-    
+    if (typeof project.isDelayed === 'boolean') {
+      updatedProject.isDelayed = project.isDelayed;
+    }
     this.projects.set(id, updatedProject);
     return updatedProject;
   }
@@ -348,21 +351,20 @@ export class MemStorage implements IStorage {
     return this.activities.get(id);
   }
   
-  async updateActivity(id: number, activity: Partial<InsertActivity>): Promise<Activity | undefined> {
+  async updateActivity(id: number, activity: UpdateActivity): Promise<Activity | undefined> {
     const existingActivity = this.activities.get(id);
     if (!existingActivity) return undefined;
-    
     const updatedActivity: Activity = {
       ...existingActivity,
       ...activity,
       updatedAt: new Date().toISOString(),
     };
-    
-    // If status is changed, update the statusUpdatedAt
     if (activity.status && activity.status !== existingActivity.status) {
       updatedActivity.statusUpdatedAt = new Date().toISOString();
     }
-    
+    if (typeof activity.isDelayed === 'boolean') {
+      updatedActivity.isDelayed = activity.isDelayed;
+    }
     this.activities.set(id, updatedActivity);
     return updatedActivity;
   }

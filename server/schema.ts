@@ -178,7 +178,7 @@ const eventSchema = z.object({
     if (isNaN(date.getTime())) {
       throw new Error("Data de início inválida");
     }
-    return date;
+    return str;
   }),
   endDate: z.string().nullable().transform((str) => {
     if (!str) return null;
@@ -186,7 +186,7 @@ const eventSchema = z.object({
     if (isNaN(date.getTime())) {
       throw new Error("Data de término inválida");
     }
-    return date;
+    return str;
   }),
   location: z.string().nullable(),
   projectId: z.number().nullable(),

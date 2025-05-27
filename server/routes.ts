@@ -19,7 +19,18 @@ import {
   insertActivityCommentSchema,
   insertAttachmentSchema,
   insertEventSchema,
-  insertAuditLogSchema
+  insertAuditLogSchema,
+  type InsertUser,
+  type InsertProject,
+  type InsertContact,
+  type InsertProjectUpdate,
+  type InsertSubproject,
+  type InsertActivity,
+  type InsertActivityComment,
+  type InsertAttachment,
+  type InsertEvent,
+  type InsertAuditLog,
+  type Project
 } from "@shared/types";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -195,17 +206,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/users", isAdmin, async (req, res) => {
     try {
-      const userData = schema.insertUserSchema.parse(req.body);
-      const existingUser = await storage.getUserByUsername(userData.username);
+      const userData: InsertUser = {
+        username: req.body.username,
+        name: req.body.name,
+        email: req.body.email,
+        password: req.body.password,
+        role: req.body.role || 'user',
+        avatar: req.body.avatar || null
+      };
+      
+      const validatedData = insertUserSchema.parse(userData);
+      const existingUser = await storage.getUserByUsername(validatedData.username);
       
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
       
-      const user = await storage.createUser(userData);
+      const user = await storage.createUser(validatedData);
       res.status(201).json(user);
     } catch (error) {
-      res.status(400).json({ message: "Invalid data" });
+      console.error("Erro ao criar usuário:", error);
+      res.status(400).json({ 
+        message: "Invalid data", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
   
@@ -248,27 +272,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/projects", async (req, res) => {
+  app.post("/api/projects", isAuthenticated, async (req, res) => {
     try {
-      console.log("Dados do projeto recebidos:", req.body);
-      const projectData = schema.insertProjectSchema.parse(req.body);
-      console.log("Dados do projeto validados:", projectData);
-      const project = await storage.createProject(projectData);
-      console.log("Projeto criado:", project);
+      const projectData: InsertProject = {
+        name: req.body.name,
+        description: req.body.description || null,
+        status: req.body.status || 'Em andamento',
+        municipality: req.body.municipality || null,
+        startDate: req.body.startDate || null,
+        endDate: req.body.endDate || null,
+        responsibleId: req.body.responsibleId || null,
+        sla: req.body.sla || null,
+        checklist: req.body.checklist || null
+      };
       
-      // Create audit log
-      await storage.createAuditLog({
-        entityType: "project",
-        entityId: project.id,
-        action: "create",
-        after: project,
+      const validatedData = insertProjectSchema.parse(projectData);
+      const project = await storage.createProject(validatedData);
+      
+      // Registrar no log de auditoria
+      const auditLog: InsertAuditLog = {
         userId: (req.user as any).id,
-      });
+        action: 'create',
+        entityType: 'project',
+        entityId: project.id,
+        details: { project }
+      };
       
+      await storage.createAuditLog(auditLog);
       res.status(201).json(project);
     } catch (error) {
       console.error("Erro ao criar projeto:", error);
-      res.status(400).json({ message: "Erro ao criar projeto", error: error.message });
+      res.status(400).json({ 
+        message: "Invalid data", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
   
@@ -290,37 +327,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/projects/:id", isAuthenticated, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
-      const projectData = schema.insertProjectSchema.partial().parse(req.body);
+      const projectData: Partial<InsertProject> = {
+        name: req.body.name,
+        status: req.body.status,
+        description: req.body.description,
+        municipality: req.body.municipality,
+        startDate: req.body.startDate,
+        endDate: req.body.endDate,
+        responsibleId: req.body.responsibleId,
+        sla: req.body.sla,
+        checklist: req.body.checklist
+      };
+
+      const project = await storage.updateProject(projectId, projectData);
       
-      const existingProject = await storage.getProject(projectId);
-      
-      if (!existingProject) {
-        return res.status(404).json({ message: "Project not found" });
-      }
-      
-      // Garante que o ID não seja alterado
-      delete projectData.id;
-      
-      const updatedProject = await storage.updateProject(projectId, projectData);
-      
-      if (!updatedProject) {
-        return res.status(500).json({ message: "Failed to update project" });
-      }
-      
-      // Create audit log
-      await storage.createAuditLog({
-        entityType: "project",
-        entityId: projectId,
-        action: "update",
-        before: existingProject,
-        after: updatedProject,
+      // Registrar no log de auditoria
+      const auditLog: InsertAuditLog = {
         userId: (req.user as any).id,
-      });
+        action: 'update',
+        entityType: 'project',
+        entityId: projectId,
+        details: { project }
+      };
       
-      res.json(updatedProject);
+      await storage.createAuditLog(auditLog);
+      res.json(project);
     } catch (error) {
       console.error("Erro ao atualizar projeto:", error);
-      res.status(400).json({ message: "Invalid data", error: error.message });
+      res.status(400).json({ 
+        message: "Invalid data", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
   
@@ -340,8 +377,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "project",
         entityId: projectId,
         action: "delete",
-        before: existingProject,
         userId: (req.user as any).id,
+        details: { before: existingProject }
       });
       
       res.json({ message: "Project deleted successfully" });
@@ -363,11 +400,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/contacts", isAuthenticated, async (req, res) => {
     try {
-      const contactData = schema.insertContactSchema.parse(req.body);
-      const contact = await storage.createContact(contactData);
+      const contactData: InsertContact = {
+        name: req.body.name,
+        projectId: req.body.projectId || 1, // Valor padrão temporário
+        email: req.body.email || null,
+        role: req.body.role || null,
+        phone: req.body.phone || null,
+        notes: req.body.notes || null
+      };
+      
+      const validatedData = insertContactSchema.parse(contactData);
+      const contact = await storage.createContact(validatedData);
       res.status(201).json(contact);
     } catch (error) {
-      res.status(400).json({ message: "Invalid data" });
+      console.error("Erro ao criar contato:", error);
+      res.status(400).json({ 
+        message: "Invalid data", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
   
@@ -384,11 +434,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/project-updates", isAuthenticated, async (req, res) => {
     try {
-      const updateData = schema.insertProjectUpdateSchema.parse(req.body);
-      const update = await storage.createProjectUpdate(updateData);
+      const updateData: InsertProjectUpdate = {
+        projectId: req.body.projectId || 1, // Valor padrão temporário
+        content: req.body.content,
+        userId: (req.user as any).id
+      };
+      
+      const validatedData = insertProjectUpdateSchema.parse(updateData);
+      const update = await storage.createProjectUpdate(validatedData);
       res.status(201).json(update);
     } catch (error) {
-      res.status(400).json({ message: "Invalid data" });
+      console.error("Erro ao criar atualização:", error);
+      res.status(400).json({ 
+        message: "Invalid data", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
   
@@ -405,21 +465,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/subprojects", isAuthenticated, async (req, res) => {
     try {
-      const subprojectData = schema.insertSubprojectSchema.parse(req.body);
-      const subproject = await storage.createSubproject(subprojectData);
+      const subprojectData: InsertSubproject = {
+        name: req.body.name,
+        description: req.body.description || null,
+        status: req.body.status || 'Em andamento',
+        projectId: req.body.projectId || 1, // Valor padrão temporário
+        responsibleId: req.body.responsibleId || null,
+        startDate: req.body.startDate || null,
+        endDate: req.body.endDate || null
+      };
       
-      // Create audit log
-      await storage.createAuditLog({
-        entityType: "subproject",
-        entityId: subproject.id,
-        action: "create",
-        after: subproject,
-        userId: (req.user as any).id,
-      });
-      
+      const validatedData = insertSubprojectSchema.parse(subprojectData);
+      const subproject = await storage.createSubproject(validatedData);
       res.status(201).json(subproject);
     } catch (error) {
-      res.status(400).json({ message: "Invalid data" });
+      console.error("Erro ao criar subprojeto:", error);
+      res.status(400).json({ 
+        message: "Invalid data", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
   
@@ -441,29 +505,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/subprojects/:id", isAuthenticated, async (req, res) => {
     try {
       const subprojectId = parseInt(req.params.id);
-      const subprojectData = schema.insertSubprojectSchema.partial().parse(req.body);
+      const subprojectData: Partial<InsertSubproject> = {
+        name: req.body.name,
+        status: req.body.status,
+        description: req.body.description,
+        startDate: req.body.startDate,
+        endDate: req.body.endDate,
+        responsibleId: req.body.responsibleId,
+        projectId: req.body.projectId
+      };
+
+      const subproject = await storage.updateSubproject(subprojectId, subprojectData);
       
-      const existingSubproject = await storage.getSubproject(subprojectId);
-      
-      if (!existingSubproject) {
-        return res.status(404).json({ message: "Subproject not found" });
-      }
-      
-      const updatedSubproject = await storage.updateSubproject(subprojectId, subprojectData);
-      
-      // Create audit log
-      await storage.createAuditLog({
-        entityType: "subproject",
-        entityId: subprojectId,
-        action: "update",
-        before: existingSubproject,
-        after: updatedSubproject,
+      // Registrar no log de auditoria
+      const auditLog: InsertAuditLog = {
         userId: (req.user as any).id,
-      });
+        action: 'update',
+        entityType: 'subproject',
+        entityId: subprojectId,
+        details: { subproject }
+      };
       
-      res.json(updatedSubproject);
+      await storage.createAuditLog(auditLog);
+      res.json(subproject);
     } catch (error) {
-      res.status(400).json({ message: "Invalid data" });
+      console.error("Erro ao atualizar subprojeto:", error);
+      res.status(400).json({ 
+        message: "Invalid data", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
   
@@ -483,8 +553,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "subproject",
         entityId: subprojectId,
         action: "delete",
-        before: existingSubproject,
         userId: (req.user as any).id,
+        details: { before: existingSubproject }
       });
       
       res.json({ message: "Subproject deleted successfully" });
@@ -506,21 +576,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/activities", isAuthenticated, async (req, res) => {
     try {
-      const activityData = schema.insertActivitySchema.parse(req.body);
-      const activity = await storage.createActivity(activityData);
+      const activityData: InsertActivity = {
+        name: req.body.name,
+        status: req.body.status || 'Em andamento',
+        description: req.body.description || null,
+        startDate: req.body.startDate || null,
+        responsibleId: req.body.responsibleId || null,
+        sla: req.body.sla || null,
+        checklist: req.body.checklist || null,
+        subprojectId: req.body.subprojectId,
+        dueDate: req.body.dueDate || null
+      };
       
-      // Create audit log
-      await storage.createAuditLog({
-        entityType: "activity",
-        entityId: activity.id,
-        action: "create",
-        after: activity,
+      const validatedData = insertActivitySchema.parse(activityData);
+      const activity = await storage.createActivity(validatedData);
+      
+      // Registrar no log de auditoria
+      const auditLog: InsertAuditLog = {
         userId: (req.user as any).id,
-      });
+        action: 'create',
+        entityType: 'activity',
+        entityId: activity.id,
+        details: { activity }
+      };
       
+      await storage.createAuditLog(auditLog);
       res.status(201).json(activity);
     } catch (error) {
-      res.status(400).json({ message: "Invalid data" });
+      console.error("Erro ao criar atividade:", error);
+      res.status(400).json({ 
+        message: "Invalid data", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
   
@@ -542,29 +629,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/activities/:id", isAuthenticated, async (req, res) => {
     try {
       const activityId = parseInt(req.params.id);
-      const activityData = schema.insertActivitySchema.partial().parse(req.body);
+      const activityData: Partial<InsertActivity> = {
+        name: req.body.name,
+        status: req.body.status,
+        description: req.body.description,
+        startDate: req.body.startDate,
+        responsibleId: req.body.responsibleId,
+        sla: req.body.sla,
+        checklist: req.body.checklist,
+        subprojectId: req.body.subprojectId,
+        dueDate: req.body.dueDate
+      };
+
+      const activity = await storage.updateActivity(activityId, activityData);
       
-      const existingActivity = await storage.getActivity(activityId);
-      
-      if (!existingActivity) {
-        return res.status(404).json({ message: "Activity not found" });
-      }
-      
-      const updatedActivity = await storage.updateActivity(activityId, activityData);
-      
-      // Create audit log
-      await storage.createAuditLog({
-        entityType: "activity",
-        entityId: activityId,
-        action: "update",
-        before: existingActivity,
-        after: updatedActivity,
+      // Registrar no log de auditoria
+      const auditLog: InsertAuditLog = {
         userId: (req.user as any).id,
-      });
+        action: 'update',
+        entityType: 'activity',
+        entityId: activityId,
+        details: { activity }
+      };
       
-      res.json(updatedActivity);
+      await storage.createAuditLog(auditLog);
+      res.json(activity);
     } catch (error) {
-      res.status(400).json({ message: "Invalid data" });
+      console.error("Erro ao atualizar atividade:", error);
+      res.status(400).json({ 
+        message: "Invalid data", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
   
@@ -584,8 +679,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "activity",
         entityId: activityId,
         action: "delete",
-        before: existingActivity,
         userId: (req.user as any).id,
+        details: { before: existingActivity }
       });
       
       res.json({ message: "Activity deleted successfully" });
@@ -607,11 +702,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/activity-comments", isAuthenticated, async (req, res) => {
     try {
-      const commentData = schema.insertActivityCommentSchema.parse(req.body);
-      const comment = await storage.createActivityComment(commentData);
+      const commentData: InsertActivityComment = {
+        content: req.body.content,
+        userId: (req.user as any).id,
+        activityId: req.body.activityId
+      };
+      
+      const validatedData = insertActivityCommentSchema.parse(commentData);
+      const comment = await storage.createActivityComment(validatedData);
       res.status(201).json(comment);
     } catch (error) {
-      res.status(400).json({ message: "Invalid data" });
+      console.error("Erro ao criar comentário:", error);
+      res.status(400).json({ 
+        message: "Invalid data", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
   
@@ -637,11 +742,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/attachments", isAuthenticated, async (req, res) => {
     try {
-      const attachmentData = schema.insertAttachmentSchema.parse(req.body);
-      const attachment = await storage.createAttachment(attachmentData);
+      const attachmentData: InsertAttachment = {
+        path: req.body.path,
+        filename: req.body.filename,
+        projectId: req.body.projectId || null,
+        subprojectId: req.body.subprojectId || null,
+        activityId: req.body.activityId || null,
+        fileType: req.body.fileType || null,
+        fileSize: req.body.fileSize || null,
+        uploadedBy: (req.user as any).id
+      };
+      
+      const validatedData = insertAttachmentSchema.parse(attachmentData);
+      const attachment = await storage.createAttachment(validatedData);
       res.status(201).json(attachment);
     } catch (error) {
-      res.status(400).json({ message: "Invalid data" });
+      console.error("Erro ao criar anexo:", error);
+      res.status(400).json({ 
+        message: "Invalid data", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
   
@@ -678,22 +798,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/events", isAuthenticated, async (req, res) => {
     try {
-      console.log("Dados recebidos na rota /api/events:", JSON.stringify(req.body, null, 2));
+      const eventData: InsertEvent = {
+        title: req.body.title,
+        description: req.body.description || null,
+        startDate: req.body.startDate,
+        endDate: req.body.endDate,
+        location: req.body.location || null,
+        projectId: req.body.projectId || null,
+        subprojectId: req.body.subprojectId || null,
+        createdBy: (req.user as any).id
+      };
       
-      // Validar os dados antes de criar o evento
-      const eventData = schema.insertEventSchema.parse(req.body);
-      console.log("Dados validados:", JSON.stringify(eventData, null, 2));
-      
-      const event = await storage.createEvent(eventData);
-      console.log("Evento criado:", JSON.stringify(event, null, 2));
-      
+      const validatedData = insertEventSchema.parse(eventData);
+      const event = await storage.createEvent(validatedData);
       res.status(201).json(event);
-    } catch (error: any) {
-      console.error("Erro detalhado ao criar evento:", error);
+    } catch (error) {
+      console.error("Erro ao criar evento:", error);
       res.status(400).json({ 
         message: "Invalid data", 
-        error: error instanceof Error ? error.message : "Unknown error",
-        details: error.errors || error
+        error: error instanceof Error ? error.message : "Unknown error" 
       });
     }
   });
@@ -716,17 +839,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/events/:id", isAuthenticated, async (req, res) => {
     try {
       const eventId = parseInt(req.params.id);
-      const eventData = schema.insertEventSchema.partial().parse(req.body);
+      const eventData: Partial<InsertEvent> = {
+        title: req.body.title,
+        description: req.body.description,
+        startDate: req.body.startDate,
+        endDate: req.body.endDate,
+        location: req.body.location,
+        projectId: req.body.projectId,
+        subprojectId: req.body.subprojectId,
+        createdBy: (req.user as any).id
+      };
+
+      const event = await storage.updateEvent(eventId, eventData);
       
-      const updatedEvent = await storage.updateEvent(eventId, eventData);
+      // Registrar no log de auditoria
+      const auditLog: InsertAuditLog = {
+        userId: (req.user as any).id,
+        action: 'update',
+        entityType: 'event',
+        entityId: eventId,
+        details: { event }
+      };
       
-      if (!updatedEvent) {
-        return res.status(404).json({ message: "Event not found" });
-      }
-      
-      res.json(updatedEvent);
+      await storage.createAuditLog(auditLog);
+      res.json(event);
     } catch (error) {
-      res.status(400).json({ message: "Invalid data" });
+      console.error("Erro ao atualizar evento:", error);
+      res.status(400).json({ 
+        message: "Invalid data", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
   
