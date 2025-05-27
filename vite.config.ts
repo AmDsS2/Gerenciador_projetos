@@ -23,13 +23,13 @@ export default defineConfig({
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },
-  root: path.resolve(import.meta.dirname, "client"),
+  root: "./client",
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/client"),
+    outDir: "../dist/client",
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: path.resolve(import.meta.dirname, "client", "index.html")
+        main: "./client/index.html"
       }
     }
   },
