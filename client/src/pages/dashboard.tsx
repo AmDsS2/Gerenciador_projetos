@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { DashboardCard } from "@/components/ui/dashboard-card";
@@ -19,12 +20,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDate, formatDateRelative, getInitials } from "@/lib/utils";
-import { Project, ProjectUpdate, User, Event, Activity } from "@shared/schema";
+import { Project, ProjectUpdate, User, Event, Activity } from "@shared/types";
 import { Separator } from "@/components/ui/separator";
 import { STATUS_COLORS } from "@/lib/constants";
 import { addDays, format, isSameDay, isSameMonth, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState } from "react";
 import { GanttChart } from "@/components/gantt/gantt-chart";
 
 export default function Dashboard() {

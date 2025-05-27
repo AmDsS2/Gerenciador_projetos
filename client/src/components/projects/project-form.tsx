@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { insertProjectSchema } from "@shared/schema";
+import { insertProjectSchema } from "@shared/types";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -32,7 +32,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { SLA_OPTIONS, DEFAULT_PROJECT_CHECKLIST } from "@/lib/constants";
-import { User } from "@shared/schema";
+import { User } from "@shared/types";
 
 // Extend the insert schema with additional validation
 const projectFormSchema = insertProjectSchema.extend({

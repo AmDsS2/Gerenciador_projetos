@@ -1,18 +1,9 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { 
-  insertUserSchema,
-  insertProjectSchema,
-  insertContactSchema,
-  insertProjectUpdateSchema,
-  insertSubprojectSchema,
-  insertActivitySchema,
-  insertActivityCommentSchema,
-  insertAttachmentSchema,
-  insertEventSchema,
-  insertAuditLogSchema
-} from "@shared/schema";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import * as schema from './schema';
 import { setupAutomation } from "./utils/automation";
 import session from "express-session";
 import passport from "passport";
@@ -192,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/users", isAdmin, async (req, res) => {
     try {
-      const userData = insertUserSchema.parse(req.body);
+      const userData = schema.insertUserSchema.parse(req.body);
       const existingUser = await storage.getUserByUsername(userData.username);
       
       if (existingUser) {
@@ -248,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects", async (req, res) => {
     try {
       console.log("Dados do projeto recebidos:", req.body);
-      const projectData = insertProjectSchema.parse(req.body);
+      const projectData = schema.insertProjectSchema.parse(req.body);
       console.log("Dados do projeto validados:", projectData);
       const project = await storage.createProject(projectData);
       console.log("Projeto criado:", project);
@@ -287,7 +278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/projects/:id", isAuthenticated, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
-      const projectData = insertProjectSchema.partial().parse(req.body);
+      const projectData = schema.insertProjectSchema.partial().parse(req.body);
       
       const existingProject = await storage.getProject(projectId);
       
@@ -360,7 +351,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/contacts", isAuthenticated, async (req, res) => {
     try {
-      const contactData = insertContactSchema.parse(req.body);
+      const contactData = schema.insertContactSchema.parse(req.body);
       const contact = await storage.createContact(contactData);
       res.status(201).json(contact);
     } catch (error) {
@@ -381,7 +372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/project-updates", isAuthenticated, async (req, res) => {
     try {
-      const updateData = insertProjectUpdateSchema.parse(req.body);
+      const updateData = schema.insertProjectUpdateSchema.parse(req.body);
       const update = await storage.createProjectUpdate(updateData);
       res.status(201).json(update);
     } catch (error) {
@@ -402,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/subprojects", isAuthenticated, async (req, res) => {
     try {
-      const subprojectData = insertSubprojectSchema.parse(req.body);
+      const subprojectData = schema.insertSubprojectSchema.parse(req.body);
       const subproject = await storage.createSubproject(subprojectData);
       
       // Create audit log
@@ -438,7 +429,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/subprojects/:id", isAuthenticated, async (req, res) => {
     try {
       const subprojectId = parseInt(req.params.id);
-      const subprojectData = insertSubprojectSchema.partial().parse(req.body);
+      const subprojectData = schema.insertSubprojectSchema.partial().parse(req.body);
       
       const existingSubproject = await storage.getSubproject(subprojectId);
       
@@ -503,7 +494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/activities", isAuthenticated, async (req, res) => {
     try {
-      const activityData = insertActivitySchema.parse(req.body);
+      const activityData = schema.insertActivitySchema.parse(req.body);
       const activity = await storage.createActivity(activityData);
       
       // Create audit log
@@ -539,7 +530,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/activities/:id", isAuthenticated, async (req, res) => {
     try {
       const activityId = parseInt(req.params.id);
-      const activityData = insertActivitySchema.partial().parse(req.body);
+      const activityData = schema.insertActivitySchema.partial().parse(req.body);
       
       const existingActivity = await storage.getActivity(activityId);
       
@@ -604,7 +595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/activity-comments", isAuthenticated, async (req, res) => {
     try {
-      const commentData = insertActivityCommentSchema.parse(req.body);
+      const commentData = schema.insertActivityCommentSchema.parse(req.body);
       const comment = await storage.createActivityComment(commentData);
       res.status(201).json(comment);
     } catch (error) {
@@ -634,7 +625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/attachments", isAuthenticated, async (req, res) => {
     try {
-      const attachmentData = insertAttachmentSchema.parse(req.body);
+      const attachmentData = schema.insertAttachmentSchema.parse(req.body);
       const attachment = await storage.createAttachment(attachmentData);
       res.status(201).json(attachment);
     } catch (error) {
@@ -678,7 +669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Dados recebidos na rota /api/events:", JSON.stringify(req.body, null, 2));
       
       // Validar os dados antes de criar o evento
-      const eventData = insertEventSchema.parse(req.body);
+      const eventData = schema.insertEventSchema.parse(req.body);
       console.log("Dados validados:", JSON.stringify(eventData, null, 2));
       
       const event = await storage.createEvent(eventData);
@@ -713,7 +704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/events/:id", isAuthenticated, async (req, res) => {
     try {
       const eventId = parseInt(req.params.id);
-      const eventData = insertEventSchema.partial().parse(req.body);
+      const eventData = schema.insertEventSchema.partial().parse(req.body);
       
       const updatedEvent = await storage.updateEvent(eventId, eventData);
       
