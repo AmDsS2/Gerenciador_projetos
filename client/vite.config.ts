@@ -21,7 +21,8 @@ export default defineConfig({
         "drizzle-orm/pg-core",
         "drizzle-zod",
         "pg",
-        "postgres"
+        "postgres",
+        "zod"
       ],
       output: {
         manualChunks: {
