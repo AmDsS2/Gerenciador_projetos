@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, addDays, differenceInDays, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Project, Subproject, Activity } from "@shared/schema";
+import { Project, Subproject, Activity } from "@shared/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { STATUS_COLORS } from "@/lib/constants";
+import { useToast } from "@/components/ui/use-toast";
+import { api } from "@/lib/api";
 
 interface GanttChartProps {
   projectId?: number;

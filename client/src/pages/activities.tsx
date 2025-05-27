@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Subproject, Project } from "@shared/schema";
+import { Subproject, Project } from "@shared/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ActivityList } from "@/components/activities/activity-list";
 import { ActivityForm } from "@/components/activities/activity-form";
 import { Filter, Plus } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { api } from "@/lib/api";
 
 export default function Activities() {
   const [selectedSubproject, setSelectedSubproject] = useState<number | null>(null);

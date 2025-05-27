@@ -7,16 +7,18 @@
  * proporcionalmente no intervalo de tempo do projeto.
  */
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, addDays, differenceInDays, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Project, Subproject, Activity } from "@shared/schema";
+import { Project, Subproject, Activity } from "@shared/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { api } from "@/lib/api";
 import { STATUS_COLORS } from "@/lib/constants";
 
 interface GanttViewProps {

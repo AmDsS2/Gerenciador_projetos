@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Subproject, User } from "@shared/schema";
+import { Activity, Subproject, User } from "@shared/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -21,9 +21,10 @@ import { ActivityForm } from "./activity-form";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { STATUS_COLORS } from "@/lib/constants";
 import { differenceInDays } from "date-fns";
+import { api } from "@/lib/api";
 
 interface ActivityListProps {
   subprojectId?: number;

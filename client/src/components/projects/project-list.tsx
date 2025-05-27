@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Project, User } from "@shared/schema";
+import { Project, User } from "@shared/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -27,6 +27,8 @@ import { Badge } from "@/components/ui/badge";
 import { Filter, Plus } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { STATUS_COLORS } from "@/lib/constants";
+import { useToast } from "@/components/ui/use-toast";
+import { api } from "@/lib/api";
 
 interface ProjectListProps {
   onCreateProject: () => void;

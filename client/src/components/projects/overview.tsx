@@ -1,4 +1,4 @@
-import { Project } from "@shared/schema";
+import { Project } from "@shared/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -10,6 +10,8 @@ import { formatDate, formatDateTime, getInitials, getResponsibleName } from "@/l
 import { STATUS_COLORS } from "@/lib/constants";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/use-toast";
+import { api } from "@/lib/api";
 
 interface OverviewProps {
   project: Project;

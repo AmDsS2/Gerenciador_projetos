@@ -1,9 +1,15 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Project } from "@shared/types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { Folder, LayoutDashboard, Calendar, Subtitles, CheckSquare, Users } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
-import { Project } from "@shared/schema";
 
 interface SidebarProps {
   user: {
@@ -71,7 +77,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
           {menuItems.map((item) => (
             <Link
               key={item.href}
-              href={item.href}
+              to={item.href}
               className={cn(
                 "flex items-center gap-3 p-3 rounded-lg transition-colors hover:bg-gray-100",
                 location === item.href && "bg-primary-light/10 text-primary"
@@ -91,7 +97,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
             {recentProjects.slice(0, 5).map((project) => (
               <Link
                 key={project.id}
-                href={`/projects/${project.id}`}
+                to={`/projects/${project.id}`}
                 className="px-3 py-2 text-sm truncate hover:bg-gray-100 rounded cursor-pointer block"
               >
                 <div className="flex items-center">

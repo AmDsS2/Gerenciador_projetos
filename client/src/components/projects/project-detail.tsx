@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Project, Subproject, ProjectUpdate, Contact, User, Attachment } from "@shared/schema";
+import { Project, Subproject, ProjectUpdate, Contact, User, Attachment } from "@shared/types";
 import { formatDate, formatDateTime, getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

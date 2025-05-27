@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Subproject, User } from "@shared/schema";
+import { Subproject, User } from "@shared/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -20,9 +20,10 @@ import { Input } from "@/components/ui/input";
 import { SubprojectForm } from "./subproject-form";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/components/ui/use-toast";
 import { STATUS_COLORS } from "@/lib/constants";
+import { api } from "@/lib/api";
 
 interface SubprojectListProps {
   projectId: number;

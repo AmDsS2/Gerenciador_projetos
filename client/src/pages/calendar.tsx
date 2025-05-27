@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Project } from "@shared/schema";
+import { Project } from "@shared/types";
 import { CalendarView } from "@/components/calendar/calendar-view";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { api } from "@/lib/api";
 
 export default function Calendar() {
   const [selectedProject, setSelectedProject] = useState<number | null>(null);

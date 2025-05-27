@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { insertActivitySchema } from "@shared/schema";
+import { insertActivitySchema, User, Subproject } from "@shared/types";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -32,7 +31,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { SLA_OPTIONS } from "@/lib/constants";
-import { User, Subproject } from "@shared/schema";
 
 // Extend the insert schema with additional validation
 const activityFormSchema = insertActivitySchema.extend({
