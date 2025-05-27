@@ -199,12 +199,11 @@ export const insertEventSchema = eventSchema;
 // Audit logs
 export const auditLogs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
+  action: text("action").notNull(),
   entityType: text("entity_type").notNull(),
   entityId: integer("entity_id").notNull(),
-  action: text("action").notNull(),
-  before: json("before"),
-  after: json("after"),
   userId: integer("user_id").references(() => users.id),
+  details: json("details"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -213,7 +212,7 @@ export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
   createdAt: true,
 });
 
-// Type exports
+// Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
@@ -242,4 +241,4 @@ export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 
 export type AuditLog = typeof auditLogs.$inferSelect;
-export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>; 

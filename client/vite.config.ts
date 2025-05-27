@@ -16,7 +16,13 @@ export default defineConfig({
     emptyOutDir: true,
     sourcemap: true,
     rollupOptions: {
-      external: ["drizzle-orm", "drizzle-orm/pg-core"],
+      external: [
+        "drizzle-orm",
+        "drizzle-orm/pg-core",
+        "drizzle-zod",
+        "pg",
+        "postgres"
+      ],
       output: {
         manualChunks: {
           vendor: ["react", "react-dom", "react-router-dom"],
